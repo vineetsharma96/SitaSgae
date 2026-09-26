@@ -1,0 +1,624 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import Card from '../../components/ui/Card.astro';
+import Badge from '../../components/ui/Badge.astro';
+import Button from '../../components/ui/Button.astro';
+import Icon from '../../components/ui/Icon.astro';
+import DetectionOverlay from '../../components/monitoring/DetectionOverlay.astro';
+import SiteMap2D from '../../components/spatial/SiteMap2D.astro';
+import { mockIncidents } from '../../lib/mockData';
+
+export function getStaticPaths() {
+  return mockIncidents.map((incident) => ({
+    params: { id: incident.id },
+    props: { incident }
+  }));
+}
+
+const { incident } = Astro.props;
+---
+
+<AppLayout title={`Investigation: ${incident.id}`} currentPath="/incidents">
+  <!-- Investigation Workspace Header / Breadcrumbs -->
+  <div class="investigation-header">
+    <div class="header-breadcrumb-row">
+      <a href="/incidents" class="back-link">
+        <Icon name="arrow-right" size={14} class="rotate-180" />
+        Back to Incident Directory
+      </a>
+      <span class="crumb-divider">/</span>
+      <span class="crumb-current">{incident.id}</span>
+      <Badge variant={incident.severity} text={incident.severity.toUpperCase()} />
+      <Badge variant="info" text={incident.status.replace('_', ' ').toUpperCase()} />
+    </div>
+
+    <div class="investigation-title-row">
+      <h1 class="text-page-title">{incident.title}</h1>
+      <div class="header-action-group">
+        <Button variant="secondary" size="sm" onclick="window.print();">
+          <Icon name="download" size={14} />
+          Print / PDF Audit
+        </Button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Priority 3.6: Three-Column Evidence Workspace -->
+  <div class="investigation-grid">
+    <!-- LEFT COLUMN: Evidence & Vision AI Overlays -->
+    <div class="left-evidence-col">
+      <Card title="Visual Evidence & Detections" subtitle={`SOURCE: ${incident.cameraId} • 4K STREAM CAPTURE`} class="evidence-card">
+        <div class="evidence-media-container">
+          <img
+            src={incident.evidenceThumbnail}
+            alt={`Incident evidence for ${incident.id}`}
+            class="evidence-full-img"
+          />
+          <DetectionOverlay detections={incident.detections} cameraName={incident.cameraName} />
+
+          <div class="evidence-hud-overlay">
+            <span class="hud-pill">TIME: {incident.timestamp}</span>
+            <span class="hud-pill">LOCATION: {incident.location}</span>
+          </div>
+        </div>
+
+        <!-- 2D Spatial Context Minimap (Priority 3.6 & 10) -->
+        <div class="spatial-context-box">
+          <div class="context-title">
+            <Icon name="map-pin" size={14} color="#3B82F6" />
+            <span class="text-metadata">2D SPATIAL TOPOLOGY ANCHOR</span>
+          </div>
+          <SiteMap2D height="200px" activeCameraId={incident.cameraId} showControls={false} />
+          <p class="text-caption" style="margin-top: 6px;">
+            Geometry verified: North Tower Level 08 crane hoist perimeter.
+          </p>
+        </div>
+      </Card>
+    </div>
+
+    <!-- CENTER COLUMN: Incident Timeline, AI Explanation & Sequence -->
+    <div class="center-investigation-col">
+      <Card title="Automated Inference Analysis" subtitle="MODEL: YOLO-SAFECONST-V4.2 • EDGE LATENCY: 48MS">
+        <div class="explanation-box">
+          <div class="confidence-header">
+            <span class="conf-label">INFERENCE CONFIDENCE</span>
+            <span class="conf-pct">{Math.round(incident.aiConfidence * 100)}%</span>
+          </div>
+          <div class="conf-bar-track">
+            <div class="conf-bar-fill" style={`width: ${incident.aiConfidence * 100}%;`}></div>
+          </div>
+          <p class="explanation-text">{incident.aiExplanation}</p>
+        </div>
+
+        <h3 class="text-card-title" style="margin: 20px 0 12px;">Event Sequence & Telemetry</h3>
+        <ol class="timeline-sequence">
+          {incident.timeline.length > 0 ? (
+            incident.timeline.map((item, idx) => (
+              <li class="timeline-step">
+                <div class="step-marker">
+                  <span class="step-idx">{idx + 1}</span>
+                </div>
+                <div class="step-content">
+                  <div class="step-top">
+                    <span class="step-title">{item.title}</span>
+                    <span class="step-time">{item.time}</span>
+                  </div>
+                  <p class="step-desc">{item.description}</p>
+                </div>
+              </li>
+            ))
+          ) : (
+            <li class="timeline-step">
+              <div class="step-marker"><span class="step-idx">1</span></div>
+              <div class="step-content">
+                <div class="step-top"><span class="step-title">Event Ingestion</span><span class="step-time">{incident.timestamp.split(' ')[1]}</span></div>
+                <p class="step-desc">Camera threshold trigger verified by edge vision node.</p>
+              </div>
+            </li>
+          )}
+        </ol>
+      </Card>
+
+      <!-- Immutable Audit Log & Supervisor Notes -->
+      <Card title="Supervisor Notes & Audit History" subtitle="IMMUTABLE RECORD • ISO 27001 COMPLIANT" class="audit-card">
+        <div class="notes-form">
+          <label for="supervisor-note-input" class="text-metadata">ADD INVESTIGATION NOTE / REMARKS</label>
+          <textarea
+            id="supervisor-note-input"
+            rows="3"
+            placeholder="Document contact with subcontractor foreman, radio dispatch verification, or corrective action..."
+            class="note-textarea"
+          ></textarea>
+          <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+            <Button variant="secondary" size="sm" id="btn-save-note">
+              Append to Audit Trail
+            </Button>
+          </div>
+        </div>
+
+        <div class="audit-history-list" id="audit-list">
+          <div class="audit-row">
+            <span class="audit-time">{incident.timestamp.split(' ')[1]}</span>
+            <span class="audit-actor">SiteSage Edge Vision</span>
+            <span class="audit-action">Event classified as {incident.severity.toUpperCase()}</span>
+          </div>
+          <div class="audit-row">
+            <span class="audit-time">{incident.timestamp.split(' ')[1]}</span>
+            <span class="audit-actor">Alert Engine</span>
+            <span class="audit-action">Push dispatched to Marshal Marcus Vance</span>
+          </div>
+        </div>
+      </Card>
+    </div>
+
+    <!-- RIGHT COLUMN: Actions, Assignee & Operational Status -->
+    <div class="right-action-col">
+      <Card title="Action & Assignment Controls" subtitle="DISPATCH & REMEDIATION WORKFLOW">
+        <div class="action-block">
+          <span class="text-metadata">RECOMMENDED ACTION</span>
+          <div class="recommendation-callout">
+            <Icon name="alert-triangle" size={16} color="#EF4444" />
+            <p class="rec-text">{incident.recommendedAction}</p>
+          </div>
+        </div>
+
+        <div class="action-block" style="margin-top: 16px;">
+          <span class="text-metadata">ASSIGNED SAFETY MARSHAL</span>
+          <div class="marshal-profile-card">
+            <div class="marshal-avatar">MV</div>
+            <div class="marshal-meta">
+              <span class="marshal-name">{incident.assignee ? incident.assignee.name : 'Marcus Vance'}</span>
+              <span class="marshal-role">{incident.assignee ? incident.assignee.role : 'Lead Safety Marshal'}</span>
+              <span class="marshal-phone">{incident.assignee ? incident.assignee.phone : '+1 (555) 019-4822'}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Core Operational Action Buttons (Priority 3.6 & Priority 12) -->
+        <div class="operational-actions-group" style="margin-top: 20px;">
+          <button type="button" class="btn btn-danger btn-lg btn-full" id="detail-ack-btn">
+            <Icon name="check" size={16} />
+            Acknowledge Event
+          </button>
+          <button type="button" class="btn btn-secondary btn-md btn-full" id="detail-assign-btn">
+            <Icon name="users" size={14} />
+            Reassign Safety Marshal
+          </button>
+          <button type="button" class="btn btn-secondary btn-md btn-full" id="detail-escalate-btn">
+            <Icon name="shield-alert" size={14} />
+            Escalate to Site Director
+          </button>
+          <button type="button" class="btn btn-primary btn-lg btn-full" id="detail-resolve-btn">
+            <Icon name="check-circle" size={16} />
+            Mark as Resolved
+          </button>
+        </div>
+      </Card>
+
+      <!-- Subcontractor & Policy Context -->
+      <Card title="Subcontractor & Rule Policy" subtitle="CONTRACTOR: APEX CRANE & RIGGING" class="subcontractor-card">
+        <div class="policy-item">
+          <span class="policy-label">OSHA STANDARD:</span>
+          <span class="policy-val">1926.100(a) Head Protection</span>
+        </div>
+        <div class="policy-item">
+          <span class="policy-label">SITE RULE:</span>
+          <span class="policy-val">Zero-tolerance Crane Swing Zone</span>
+        </div>
+        <div class="policy-item">
+          <span class="policy-label">REPEAT VIOLATION:</span>
+          <span class="policy-val text-warning">1st Notice (Shift 1)</span>
+        </div>
+      </Card>
+    </div>
+  </div>
+
+  <script>
+    const ackBtn = document.getElementById('detail-ack-btn');
+    const assignBtn = document.getElementById('detail-assign-btn');
+    const escalateBtn = document.getElementById('detail-escalate-btn');
+    const resolveBtn = document.getElementById('detail-resolve-btn');
+    const saveNoteBtn = document.getElementById('btn-save-note');
+    const noteInput = document.getElementById('supervisor-note-input') as HTMLTextAreaElement | null;
+    const auditList = document.getElementById('audit-list');
+
+    ackBtn?.addEventListener('click', () => {
+      ackBtn.innerHTML = '<span>Acknowledged ✓</span>';
+      (ackBtn as HTMLButtonElement).disabled = true;
+      (window as any).showToast?.('Incident acknowledged.', 'safe');
+      addAuditRow('Marcus Vance', 'Acknowledged incident via command console');
+    });
+
+    assignBtn?.addEventListener('click', () => {
+      const marshal = prompt('Enter new marshal name or ID:', 'Elena Rostova (Sector 3)');
+      if (marshal) {
+        (window as any).showToast?.(`Reassigned to ${marshal}`, 'info');
+        addAuditRow('Marcus Vance', `Reassigned to ${marshal}`);
+      }
+    });
+
+    escalateBtn?.addEventListener('click', () => {
+      (window as any).showToast?.('Incident escalated to Site Director.', 'warning');
+      addAuditRow('Marcus Vance', 'Escalated severity to Level 2 (Site Director notified)');
+    });
+
+    resolveBtn?.addEventListener('click', () => {
+      if (confirm('Confirm resolution: Hard hat donned and worker retreated to safe zone?')) {
+        resolveBtn.innerHTML = '<span>Resolved & Closed ✓</span>';
+        (resolveBtn as HTMLButtonElement).disabled = true;
+        (window as any).showToast?.('Incident resolved and closed.', 'safe');
+        addAuditRow('Marcus Vance', 'Resolved: Verified compliant via CAM-014');
+      }
+    });
+
+    saveNoteBtn?.addEventListener('click', () => {
+      const text = noteInput?.value.trim();
+      if (!text) return;
+      addAuditRow('Supervisor Note', text);
+      if (noteInput) noteInput.value = '';
+      (window as any).showToast?.('Note appended to immutable audit log.', 'safe');
+    });
+
+    function addAuditRow(actor: string, action: string) {
+      if (!auditList) return;
+      const now = new Date().toTimeString().split(' ')[0];
+      const row = document.createElement('div');
+      row.className = 'audit-row fade-in';
+      row.innerHTML = `
+        <span class="audit-time">${now}</span>
+        <span class="audit-actor">${actor}</span>
+        <span class="audit-action">${action}</span>
+      `;
+      auditList.prepend(row);
+    }
+  </script>
+</AppLayout>
+
+<style>
+  .investigation-header {
+    margin-bottom: var(--space-6);
+  }
+  .header-breadcrumb-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+  .back-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+  }
+  .back-link:hover {
+    color: #FFFFFF;
+  }
+  .rotate-180 {
+    transform: rotate(180deg);
+  }
+  .crumb-divider {
+    color: var(--color-border);
+  }
+  .crumb-current {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+  }
+  .investigation-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+
+  .investigation-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1.3fr 1fr;
+    gap: var(--space-6);
+  }
+
+  /* Left Column */
+  .left-evidence-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .evidence-media-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #020617;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+  }
+  .evidence-full-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .evidence-hud-overlay {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+  }
+  .hud-pill {
+    background: rgba(11, 18, 32, 0.85);
+    border: 1px solid var(--color-border);
+    padding: 2px 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #94A3B8;
+    border-radius: var(--radius-xs);
+  }
+  .spatial-context-box {
+    margin-top: var(--space-4);
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+  }
+  .context-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: var(--space-2);
+  }
+
+  /* Center Column */
+  .center-investigation-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .explanation-box {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-4);
+  }
+  .confidence-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .conf-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-weight: 700;
+  }
+  .conf-pct {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-md);
+    color: var(--color-safe-light);
+    font-weight: 800;
+  }
+  .conf-bar-track {
+    width: 100%;
+    height: 6px;
+    background: var(--color-border);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    margin-bottom: var(--space-3);
+  }
+  .conf-bar-fill {
+    height: 100%;
+    background: var(--color-safe);
+  }
+  .explanation-text {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+  }
+
+  .timeline-sequence {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    position: relative;
+    padding-left: var(--space-2);
+  }
+  .timeline-sequence::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 17px;
+    width: 2px;
+    background: var(--color-border);
+  }
+  .timeline-step {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    position: relative;
+  }
+  .step-marker {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--color-surface-elevated);
+    border: 2px solid var(--color-info);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+  .step-idx {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 700;
+    color: #FFFFFF;
+  }
+  .step-content {
+    flex: 1;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+  }
+  .step-top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+  .step-title {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  .step-time {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+  .step-desc {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+  }
+
+  .notes-form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: var(--space-4);
+  }
+  .note-textarea {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    color: #FFFFFF;
+    font-family: inherit;
+    font-size: var(--font-size-xs);
+    resize: vertical;
+    outline: none;
+  }
+  .note-textarea:focus {
+    border-color: var(--color-info);
+  }
+  .audit-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px solid var(--color-border);
+    padding-top: var(--space-3);
+  }
+  .audit-row {
+    display: grid;
+    grid-template-columns: 70px 140px 1fr;
+    font-size: 11px;
+    padding: 4px 0;
+  }
+  .audit-time {
+    font-family: var(--font-mono);
+    color: var(--color-text-muted);
+  }
+  .audit-actor {
+    font-weight: 600;
+    color: var(--color-info-light);
+  }
+  .audit-action {
+    color: var(--color-text-secondary);
+  }
+
+  /* Right Column */
+  .right-action-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .recommendation-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: var(--color-critical-bg);
+    border-left: 3px solid var(--color-critical);
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    margin-top: 4px;
+  }
+  .rec-text {
+    font-size: var(--font-size-xs);
+    color: #FFFFFF;
+    font-weight: 500;
+  }
+  .marshal-profile-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+    margin-top: 4px;
+  }
+  .marshal-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--color-info-dark);
+    color: var(--color-info-light);
+    border: 1px solid var(--color-info-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: var(--font-size-xs);
+  }
+  .marshal-meta {
+    display: flex;
+    flex-direction: column;
+  }
+  .marshal-name {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  .marshal-role {
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+  .marshal-phone {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-info-light);
+  }
+  .operational-actions-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .btn-full {
+    width: 100%;
+  }
+
+  .policy-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: var(--font-size-xs);
+  }
+  .policy-label {
+    font-family: var(--font-mono);
+    color: var(--color-text-muted);
+  }
+  .policy-val {
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+
+  @media (max-width: 1200px) {
+    .investigation-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

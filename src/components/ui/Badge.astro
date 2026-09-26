@@ -1,0 +1,22 @@
+---
+import type { Severity } from '../../lib/types';
+
+interface Props {
+  variant?: Severity | 'muted';
+  text?: string;
+  showDot?: boolean;
+  class?: string;
+}
+
+const {
+  variant = 'info',
+  text,
+  showDot = true,
+  class: className = ''
+} = Astro.props;
+---
+
+<span class={`badge badge-${variant} ${className}`}>
+  {showDot && <span class="badge-dot" aria-hidden="true" />}
+  <span>{text ? text : <slot />}</span>
+</span>

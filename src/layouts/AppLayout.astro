@@ -1,0 +1,218 @@
+---
+import '../styles/global.css';
+import Sidebar from '../components/navigation/Sidebar.astro';
+import Header from '../components/navigation/Header.astro';
+import MobileNav from '../components/navigation/MobileNav.astro';
+import Icon from '../components/ui/Icon.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  currentPath?: string;
+  activeCriticalCount?: number;
+}
+
+const {
+  title = 'SiteSage Command Center',
+  description = 'Intelligent AI construction safety command center',
+  currentPath = Astro.url.pathname,
+  activeCriticalCount = 2
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} — SiteSage</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="app-body">
+    <a href="#main-content" class="skip-link">Skip to operational dashboard</a>
+
+    <!-- Subtle Blue Cursor-Following Dot (Desktop Pointer Only) -->
+    <div id="cursor-dot" aria-hidden="true"></div>
+
+    <!-- Desktop Operational Sidebar -->
+    <Sidebar currentPath={currentPath} />
+
+    <div class="app-shell">
+      <!-- Global Command Center Header -->
+      <Header activeCriticalCount={activeCriticalCount} />
+
+      <!-- Main Operational Workspace -->
+      <main id="main-content" class="app-main-content">
+        <slot />
+      </main>
+    </div>
+
+    <!-- Mobile Field Navigation Bar -->
+    <MobileNav currentPath={currentPath} criticalAlertCount={activeCriticalCount} />
+
+    <!-- Global Toast Notification Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <script>
+      // Desktop Cursor Dot
+      const cursorDot = document.getElementById('cursor-dot');
+      if (cursorDot && window.matchMedia('(pointer: fine)').matches) {
+        let mouseX = 0, mouseY = 0;
+        let dotX = 0, dotY = 0;
+
+        window.addEventListener('mousemove', (e) => {
+          mouseX = e.clientX;
+          mouseY = e.clientY;
+          cursorDot.style.opacity = '1';
+        }, { passive: true });
+
+        window.addEventListener('mouseleave', () => {
+          cursorDot.style.opacity = '0';
+        });
+
+        const render = () => {
+          dotX += (mouseX - dotX) * 0.2;
+          dotY += (mouseY - dotY) * 0.2;
+          cursorDot.style.left = `${dotX}px`;
+          cursorDot.style.top = `${dotY}px`;
+          requestAnimationFrame(render);
+        };
+        requestAnimationFrame(render);
+      }
+
+      // Global Operational Toast Helper
+      (window as any).showToast = function(message: string, type: 'safe' | 'warning' | 'critical' | 'info' = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type} fade-in`;
+        toast.innerHTML = `
+          <div class="toast-dot"></div>
+          <span class="toast-message">${message}</span>
+          <button class="toast-close" aria-label="Close notification">&times;</button>
+        `;
+        container.appendChild(toast);
+
+        const closeBtn = toast.querySelector('.toast-close');
+        closeBtn?.addEventListener('click', () => toast.remove());
+
+        setTimeout(() => {
+          toast.classList.add('fade-out');
+          setTimeout(() => toast.remove(), 250);
+        }, 4000);
+      };
+    </script>
+
+    <style>
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 10px;
+        background: var(--color-info);
+        color: #fff;
+        padding: 8px 16px;
+        z-index: 9999;
+        transition: top 0.2s;
+        font-weight: 600;
+        border-radius: var(--radius-sm);
+      }
+      .skip-link:focus {
+        top: 10px;
+      }
+      .app-body {
+        display: flex;
+        background: var(--color-bg);
+      }
+      .app-shell {
+        flex: 1;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .app-main-content {
+        margin-left: 240px;
+        flex: 1;
+        padding: var(--space-6);
+        max-width: 1600px;
+      }
+      .toast-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: var(--z-toast);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-2);
+        pointer-events: none;
+      }
+      :global(.toast) {
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: 10px 16px;
+        background: var(--color-surface-elevated);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-lg);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-primary);
+        min-width: 280px;
+      }
+      :global(.toast-dot) {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      :global(.toast-safe .toast-dot) {
+        background: var(--color-safe);
+        box-shadow: 0 0 8px var(--color-safe);
+      }
+      :global(.toast-safe) {
+        border-color: var(--color-safe-border);
+      }
+      :global(.toast-critical .toast-dot) {
+        background: var(--color-critical);
+        box-shadow: 0 0 8px var(--color-critical);
+      }
+      :global(.toast-critical) {
+        border-color: var(--color-critical-border);
+      }
+      :global(.toast-warning .toast-dot) {
+        background: var(--color-warning);
+        box-shadow: 0 0 8px var(--color-warning);
+      }
+      :global(.toast-warning) {
+        border-color: var(--color-warning-border);
+      }
+      :global(.toast-info .toast-dot) {
+        background: var(--color-info);
+        box-shadow: 0 0 8px var(--color-info);
+      }
+      :global(.toast-close) {
+        margin-left: auto;
+        font-size: 18px;
+        color: var(--color-text-muted);
+        line-height: 1;
+      }
+      :global(.toast-close:hover) {
+        color: var(--color-text-primary);
+      }
+
+      @media (max-width: 1024px) {
+        .app-main-content {
+          margin-left: 0;
+          padding: var(--space-4) var(--space-4) calc(var(--space-8) + 64px);
+        }
+      }
+    </style>
+  </body>
+</html>

@@ -1,0 +1,486 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import Badge from '../components/ui/Badge.astro';
+import Button from '../components/ui/Button.astro';
+import Icon from '../components/ui/Icon.astro';
+import DetectionOverlay from '../components/monitoring/DetectionOverlay.astro';
+import { mockCameras, mockIncidents } from '../lib/mockData';
+
+const criticalIncident = mockIncidents[0];
+---
+
+<AppLayout title="Live Camera Monitoring Wall" currentPath="/live-monitoring">
+  <div class="live-monitoring-header">
+    <div class="header-titles">
+      <div class="site-tag">
+        <span class="badge-dot" style="background: var(--color-safe);"></span>
+        <span class="text-metadata">SECTOR 4 HIGH-DEF SURVEILLANCE MATRIX</span>
+      </div>
+      <h1 class="text-page-title">Live Vision AI Monitoring</h1>
+    </div>
+
+    <!-- Filter and Layout Controls (Priority 3.4) -->
+    <div class="monitoring-controls">
+      <div class="filter-pill-group" role="tablist" aria-label="Camera Status Filters">
+        <button type="button" class="filter-pill active" data-filter="all">All (6)</button>
+        <button type="button" class="filter-pill" data-filter="critical">
+          <span class="badge-dot" style="background: var(--color-critical);"></span>
+          Critical (1)
+        </button>
+        <button type="button" class="filter-pill" data-filter="online">Online (5)</button>
+        <button type="button" class="filter-pill" data-filter="offline">Offline (1)</button>
+      </div>
+
+      <div class="layout-toggle-group">
+        <button type="button" class="layout-btn active" id="layout-grid-btn" title="Grid 3x2 View">
+          <Icon name="layers" size={14} />
+        </button>
+        <button type="button" class="layout-btn" id="layout-focus-btn" title="Focus 1+4 View">
+          <Icon name="maximize" size={14} />
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Primary Workspace: Camera Wall + Right Incident Rail -->
+  <div class="camera-wall-workspace">
+    <!-- Camera Tiles Grid -->
+    <div class="camera-grid" id="camera-grid-container">
+      {mockCameras.map((cam) => {
+        const isOffline = cam.status === 'offline';
+        const hasCritical = cam.id === 'CAM-014';
+        const detections = hasCritical ? criticalIncident.detections : [];
+
+        return (
+          <div
+            class={`camera-tile panel ${hasCritical ? 'tile-critical' : ''} ${isOffline ? 'tile-offline' : ''}`}
+            data-camera-id={cam.id}
+            data-status={cam.status}
+            data-critical={hasCritical ? 'true' : 'false'}
+          >
+            <!-- Camera Tile Header -->
+            <div class="tile-header">
+              <div class="cam-info">
+                <span class="badge-dot" style={`background: ${isOffline ? '#64748B' : hasCritical ? 'var(--color-critical)' : 'var(--color-safe)'};`}></span>
+                <span class="cam-name">{cam.id} • {cam.name}</span>
+              </div>
+              <Badge
+                variant={isOffline ? 'muted' : hasCritical ? 'critical' : 'safe'}
+                text={isOffline ? 'OFFLINE' : hasCritical ? 'CRITICAL RISK' : 'ONLINE'}
+                showDot={false}
+              />
+            </div>
+
+            <!-- Video Viewport Frame -->
+            <div class="tile-viewport">
+              {isOffline ? (
+                <div class="offline-state-view">
+                  <Icon name="camera" size={32} color="#64748B" />
+                  <p class="offline-title">CAMERA SIGNAL OFFLINE</p>
+                  <p class="text-caption">RTSP connection timed out (14m ago). Edge daemon auto-reconnecting...</p>
+                  <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 8px;">
+                    <Icon name="refresh" size={12} />
+                    Retry Handshake
+                  </button>
+                </div>
+              ) : (
+                <div class="tile-media-wrapper">
+                  <img
+                    src={hasCritical ? '/assets/evidence-helmet-crane.svg' : cam.id === 'CAM-008' ? '/assets/evidence-excavation.svg' : cam.id === 'CAM-021' ? '/assets/evidence-scaffold.svg' : '/assets/evidence-hoist.svg'}
+                    alt={`Realtime stream for ${cam.name}`}
+                    class="tile-stream-img"
+                    loading="lazy"
+                  />
+                  <!-- Computer Vision Overlays -->
+                  <DetectionOverlay detections={detections} cameraName={cam.name} />
+
+                  <!-- Stream Watermark HUD -->
+                  <div class="tile-hud-top">
+                    <span class="hud-mono">{cam.resolution}</span>
+                    <span class="hud-mono">{cam.fps} FPS • {cam.latencyMs}ms</span>
+                  </div>
+
+                  <!-- Quick Action Overlay on Hover -->
+                  <div class="tile-hover-actions">
+                    {hasCritical ? (
+                      <a href={`/incidents/${criticalIncident.id}`} class="btn btn-danger btn-sm">
+                        <Icon name="shield-alert" size={12} />
+                        Investigate Incident
+                      </a>
+                    ) : (
+                      <button type="button" class="btn btn-secondary btn-sm" onclick={`alert('Zoom focus on ${cam.id}');`}>
+                        <Icon name="maximize" size={12} />
+                        Focus Stream
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <!-- Tile Footer Metadata -->
+            <div class="tile-footer">
+              <span class="text-caption">{cam.level} • {cam.zone}</span>
+              <span class="text-metadata">{cam.activeRules.length} ACTIVE RULES</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- Right Incident Rail (Priority 3.4 Context Preservation) -->
+    <aside class="incident-rail panel" aria-label="Active Incidents Rail">
+      <div class="rail-header">
+        <h3 class="text-card-title">Active Incident Rail</h3>
+        <Badge variant="critical" text="1 NEW" />
+      </div>
+
+      <div class="rail-items">
+        <div class="rail-card active-rail-card">
+          <div class="rail-card-top">
+            <span class="badge badge-critical">CRITICAL</span>
+            <span class="text-metadata">00:11:45</span>
+          </div>
+          <h4 class="rail-card-title">Missing Helmet in Crane Radius</h4>
+          <p class="text-caption">CAM-014 • North Tower Level 08</p>
+          <div class="rail-card-action">
+            <a href={`/incidents/${criticalIncident.id}`} class="btn btn-danger btn-sm" style="width: 100%;">
+              Open Investigation
+              <Icon name="arrow-right" size={12} />
+            </a>
+          </div>
+        </div>
+
+        <div class="rail-card">
+          <div class="rail-card-top">
+            <span class="badge badge-warning">WARNING</span>
+            <span class="text-metadata">23:45:10</span>
+          </div>
+          <h4 class="rail-card-title">Trench Exclusion Buffer Incursion</h4>
+          <p class="text-caption">CAM-008 • Sub-level B2</p>
+          <div class="rail-card-action">
+            <a href="/incidents/INC-2026-0880" class="btn btn-secondary btn-sm" style="width: 100%;">
+              Review Event
+            </a>
+          </div>
+        </div>
+
+        <div class="rail-card">
+          <div class="rail-card-top">
+            <span class="badge badge-warning">WARNING</span>
+            <span class="text-metadata">22:14:02</span>
+          </div>
+          <h4 class="rail-card-title">Unhooked Harness on Perimeter</h4>
+          <p class="text-caption">CAM-021 • Level 12 Edge</p>
+          <div class="rail-card-action">
+            <a href="/incidents/INC-2026-0879" class="btn btn-secondary btn-sm" style="width: 100%;">
+              Review Event
+            </a>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    // Live filter handler
+    const filterPills = document.querySelectorAll('.filter-pill');
+    const tiles = document.querySelectorAll('.camera-tile');
+
+    filterPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        filterPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+
+        const filter = pill.getAttribute('data-filter');
+        tiles.forEach(tile => {
+          const status = tile.getAttribute('data-status');
+          const isCritical = tile.getAttribute('data-critical') === 'true';
+
+          if (filter === 'all') {
+            (tile as HTMLElement).style.display = 'flex';
+          } else if (filter === 'critical') {
+            (tile as HTMLElement).style.display = isCritical ? 'flex' : 'none';
+          } else if (filter === 'online') {
+            (tile as HTMLElement).style.display = status === 'online' ? 'flex' : 'none';
+          } else if (filter === 'offline') {
+            (tile as HTMLElement).style.display = status === 'offline' ? 'flex' : 'none';
+          }
+        });
+      });
+    });
+
+    // Layout Toggle Handler
+    const gridBtn = document.getElementById('layout-grid-btn');
+    const focusBtn = document.getElementById('layout-focus-btn');
+    const gridContainer = document.getElementById('camera-grid-container');
+
+    gridBtn?.addEventListener('click', () => {
+      gridBtn.classList.add('active');
+      focusBtn?.classList.remove('active');
+      gridContainer?.classList.remove('focus-layout');
+    });
+
+    focusBtn?.addEventListener('click', () => {
+      focusBtn.classList.add('active');
+      gridBtn?.classList.remove('active');
+      gridContainer?.classList.add('focus-layout');
+    });
+  </script>
+</AppLayout>
+
+<style>
+  .live-monitoring-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  .header-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .site-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .monitoring-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .filter-pill-group {
+    display: flex;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+  }
+  .filter-pill {
+    padding: 4px 12px;
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    border-radius: var(--radius-xs);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all var(--duration-fast);
+  }
+  .filter-pill.active {
+    background: var(--color-surface);
+    color: #FFFFFF;
+    border: 1px solid var(--color-border-active);
+  }
+  .layout-toggle-group {
+    display: flex;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+  }
+  .layout-btn {
+    padding: 6px 10px;
+    color: var(--color-text-secondary);
+    border-radius: var(--radius-xs);
+  }
+  .layout-btn.active {
+    background: var(--color-surface);
+    color: var(--color-info-light);
+  }
+
+  .camera-wall-workspace {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: var(--space-6);
+  }
+  .camera-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+  }
+  .camera-grid.focus-layout {
+    grid-template-columns: 2fr 1fr;
+  }
+  .camera-grid.focus-layout .camera-tile:first-child {
+    grid-column: 1 / 2;
+    grid-row: 1 / 4;
+  }
+
+  .camera-tile {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: transform var(--duration-fast), border-color var(--duration-fast);
+  }
+  .tile-critical {
+    border-color: var(--color-critical-border);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+  }
+  .tile-offline {
+    opacity: 0.85;
+  }
+  .tile-header {
+    padding: 8px 12px;
+    background: var(--color-surface-elevated);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .cam-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cam-name {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  .tile-viewport {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #020617;
+    overflow: hidden;
+  }
+  .tile-media-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .tile-stream-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .tile-hud-top {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+  }
+  .hud-mono {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #94A3B8;
+    background: rgba(11, 18, 32, 0.8);
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--color-border-subtle);
+  }
+  .tile-hover-actions {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity var(--duration-fast);
+    z-index: 10;
+  }
+  .tile-viewport:hover .tile-hover-actions {
+    opacity: 1;
+  }
+
+  .offline-state-view {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-4);
+    background: #090E17;
+  }
+  .offline-title {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-text-muted);
+    margin-top: 8px;
+  }
+
+  .tile-footer {
+    padding: 6px 12px;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Incident Rail */
+  .incident-rail {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4);
+  }
+  .rail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: var(--space-3);
+  }
+  .rail-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    overflow-y: auto;
+  }
+  .rail-card {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .active-rail-card {
+    border-color: var(--color-critical-border);
+    background: rgba(239, 68, 68, 0.04);
+  }
+  .rail-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .rail-card-title {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  .rail-card-action {
+    margin-top: 6px;
+  }
+
+  @media (max-width: 1400px) {
+    .camera-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .camera-wall-workspace {
+      grid-template-columns: 1fr;
+    }
+    .incident-rail {
+      order: 2;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .camera-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

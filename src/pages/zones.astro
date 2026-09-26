@@ -1,0 +1,484 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import Card from '../components/ui/Card.astro';
+import Badge from '../components/ui/Badge.astro';
+import Button from '../components/ui/Button.astro';
+import Icon from '../components/ui/Icon.astro';
+import { mockZones, mockCameras } from '../lib/mockData';
+---
+
+<AppLayout title="Safety Zone Geofence Designer" currentPath="/zones">
+  <div class="zones-page-header">
+    <div class="header-titles">
+      <div class="site-tag">
+        <span class="badge-dot" style="background: var(--color-warning);"></span>
+        <span class="text-metadata">COMPUTER VISION 2D GEOMETRY RULES</span>
+      </div>
+      <h1 class="text-page-title">Safety Zone & Geofence Editor</h1>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-simulate-worker-path">
+        <Icon name="play" size={14} color="#3B82F6" />
+        Simulate Worker Breach Path
+      </button>
+      <button type="button" class="btn btn-primary btn-sm" id="btn-save-zone">
+        <Icon name="check" size={14} />
+        Save Configured Zone
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Split: 2D Interactive Canvas Editor + Right Rule Config Panel -->
+  <div class="zones-editor-layout">
+    <!-- Left: 2D Canvas Editor Area -->
+    <div class="canvas-editor-panel panel">
+      <!-- Toolbar -->
+      <div class="editor-toolbar">
+        <div class="tool-group">
+          <label for="editor-cam-select" class="text-metadata">REFERENCE CAMERA:</label>
+          <select id="editor-cam-select" class="cam-select">
+            {mockCameras.map(cam => (
+              <option value={cam.id}>{cam.id} — {cam.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div class="tool-group">
+          <button type="button" class="tool-btn active" id="btn-mode-draw" title="Draw Polygon Vertices">
+            <Icon name="plus" size={12} />
+            <span>Draw Vertices</span>
+          </button>
+          <button type="button" class="tool-btn" id="btn-clear-vertices" title="Clear Canvas">
+            <Icon name="trash" size={12} />
+            <span>Clear</span>
+          </button>
+          <button type="button" class="tool-btn" id="btn-reset-zone-view" title="Reset Viewport">
+            <Icon name="refresh" size={12} />
+            <span>Reset View</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Drawing Canvas Area -->
+      <div class="zone-drawing-viewport" id="zone-viewport">
+        <!-- Background Camera Stream Image -->
+        <img
+          src="/assets/evidence-helmet-crane.svg"
+          alt="Reference camera background for safety zone definition"
+          class="zone-bg-img"
+          id="zone-bg-feed"
+        />
+
+        <!-- Interactive SVG Overlay for Polygons & Vertices -->
+        <svg id="zone-svg-canvas" class="zone-svg-overlay" viewBox="0 0 1000 562" preserveAspectRatio="none">
+          <!-- Existing Saved Zones -->
+          <polygon
+            id="saved-zone-poly"
+            points="200,100 650,80 750,380 350,450 150,280"
+            fill="rgba(239, 68, 68, 0.18)"
+            stroke="#EF4444"
+            stroke-width="2"
+            stroke-dasharray="6 3"
+          />
+
+          <!-- Live In-Progress Polygon -->
+          <polygon id="in-progress-poly" points="" fill="rgba(59, 130, 246, 0.2)" stroke="#3B82F6" stroke-width="2" />
+          <polyline id="in-progress-line" points="" fill="none" stroke="#60A5FA" stroke-width="2" stroke-dasharray="4 2" />
+
+          <!-- Vertex Markers Group -->
+          <g id="vertex-markers-group"></g>
+
+          <!-- Simulated Worker Dot -->
+          <g id="simulated-worker-dot" style="display: none;">
+            <circle cx="0" cy="0" r="8" fill="#EF4444" stroke="#FFFFFF" stroke-width="2" />
+            <text x="12" y="4" fill="#EF4444" font-family="JetBrains Mono" font-size="11" font-weight="bold">#SIM-WORKER (INCURSION)</text>
+          </g>
+        </svg>
+
+        <div class="editor-instructions-hud">
+          <span class="hud-text">CLICK TO ADD VERTEX • DOUBLE CLICK TO CLOSE POLYGON • DRAG HANDLES TO ADJUST</span>
+        </div>
+      </div>
+
+      <!-- Geometry Validation Banner (Priority 9 & 10) -->
+      <div class="geometry-status-bar" id="geom-status-bar">
+        <Icon name="check-circle" size={14} color="#10B981" />
+        <span id="geom-status-text">Polygon Valid: 5 vertices defined, zero edge self-intersections.</span>
+      </div>
+    </div>
+
+    <!-- Right: Rule Definition & Assignment Panel -->
+    <div class="zone-config-panel">
+      <Card title="Zone Rules & Alert Dispatch" subtitle="INTERACTION: DRAW → RULE → SEVERITY → RECIPIENTS">
+        <form class="zone-rule-form" id="zone-rule-form">
+          <div class="form-group">
+            <label for="zone-name" class="form-label">ZONE IDENTIFIER / NAME</label>
+            <input type="text" id="zone-name" class="form-input" value="Tower Crane 1 Slewing Radius (Level 08)" required />
+          </div>
+
+          <div class="form-group">
+            <label for="zone-type" class="form-label">ZONE CLASSIFICATION</label>
+            <select id="zone-type" class="form-input">
+              <option value="danger">Danger Zone (Active Machinery)</option>
+              <option value="restricted">Restricted Zone (Edge / Trench)</option>
+              <option value="ppe_required">Mandatory PPE Check Gate</option>
+              <option value="entry_exit">Turnstile Entry/Exit Transit</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="zone-rule" class="form-label">INSPECTION RULE SPECIFICATION</label>
+            <textarea id="zone-rule" rows="2" class="form-input">No unauthorized personnel without radio spotter contact and verified safety helmet.</textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="zone-severity" class="form-label">ALERT SEVERITY</label>
+              <select id="zone-severity" class="form-input">
+                <option value="critical">Critical (Immediate Stop)</option>
+                <option value="warning">Warning (Yellow Alert)</option>
+                <option value="info">Informational Log</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="zone-schedule" class="form-label">ACTIVE SCHEDULE</label>
+              <select id="zone-schedule" class="form-input">
+                <option value="hoist">Crane Shift (07:00 - 19:00)</option>
+                <option value="247">Continuous 24/7</option>
+                <option value="night">Night Shift Only</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">ALERT RECIPIENTS (MULTI-CHANNEL)</label>
+            <div class="recipients-checks">
+              <label class="check-label">
+                <input type="checkbox" checked /> Crane Cab Operator Display
+              </label>
+              <label class="check-label">
+                <input type="checkbox" checked /> Sector 4 Lead Marshal Vance
+              </label>
+              <label class="check-label">
+                <input type="checkbox" checked /> Zone 8 Loudspeaker Siren
+              </label>
+              <label class="check-label">
+                <input type="checkbox" /> Mobile Field App Push
+              </label>
+            </div>
+          </div>
+        </form>
+      </Card>
+
+      <!-- Active Zones List -->
+      <Card title="Active Geofenced Zones" subtitle="3 CONFIGURED ON CURRENT SITE" style="margin-top: var(--space-4);">
+        <div class="active-zones-list">
+          {mockZones.map((zone) => (
+            <div class="zone-list-item">
+              <div class="zone-item-top">
+                <Badge variant={zone.severity} text={zone.type.toUpperCase()} />
+                <span class="text-metadata">{zone.cameraId}</span>
+              </div>
+              <span class="zone-item-name">{zone.name}</span>
+              <span class="text-caption">{zone.schedule}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  </div>
+
+  <script>
+    // 2D Polygon Vertex Drawing & Validation Simulator
+    const canvas = document.getElementById('zone-svg-canvas');
+    const inProgressPoly = document.getElementById('in-progress-poly');
+    const inProgressLine = document.getElementById('in-progress-line');
+    const vertexGroup = document.getElementById('vertex-markers-group');
+    const clearBtn = document.getElementById('btn-clear-vertices');
+    const simWorkerBtn = document.getElementById('btn-simulate-worker-path');
+    const simWorkerDot = document.getElementById('simulated-worker-dot');
+    const saveZoneBtn = document.getElementById('btn-save-zone');
+    const geomStatusBar = document.getElementById('geom-status-bar');
+
+    let vertices: Array<{ x: number, y: number }> = [];
+
+    canvas?.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = 1000 / rect.width;
+      const scaleY = 562 / rect.height;
+      const x = Math.round((e.clientX - rect.left) * scaleX);
+      const y = Math.round((e.clientY - rect.top) * scaleY);
+
+      vertices.push({ x, y });
+      renderVertices();
+    });
+
+    function renderVertices() {
+      if (!vertexGroup || !inProgressLine || !inProgressPoly) return;
+
+      const pts = vertices.map(v => `${v.x},${v.y}`).join(' ');
+      inProgressPoly.setAttribute('points', pts);
+      inProgressLine.setAttribute('points', pts);
+
+      vertexGroup.innerHTML = '';
+      vertices.forEach((v, idx) => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', v.x.toString());
+        circle.setAttribute('cy', v.y.toString());
+        circle.setAttribute('r', '6');
+        circle.setAttribute('fill', '#3B82F6');
+        circle.setAttribute('stroke', '#FFFFFF');
+        circle.setAttribute('stroke-width', '2');
+        vertexGroup.appendChild(circle);
+      });
+    }
+
+    clearBtn?.addEventListener('click', () => {
+      vertices = [];
+      renderVertices();
+      (window as any).showToast?.('Canvas cleared. Click to place new vertices.', 'info');
+    });
+
+    saveZoneBtn?.addEventListener('click', () => {
+      (window as any).showToast?.('Safety zone configuration saved and pushed to Edge YOLO node.', 'safe');
+    });
+
+    // Simulated Worker Path Testing
+    simWorkerBtn?.addEventListener('click', () => {
+      if (!simWorkerDot) return;
+      simWorkerDot.style.display = 'block';
+
+      let step = 0;
+      const path = [
+        { x: 100, y: 300 },
+        { x: 180, y: 260 },
+        { x: 260, y: 230 }, // Incursion into polygon
+        { x: 340, y: 220 },
+        { x: 420, y: 210 }
+      ];
+
+      const interval = setInterval(() => {
+        if (step >= path.length) {
+          clearInterval(interval);
+          (window as any).showToast?.('SIMULATION TRIGGERED: Worker penetrated active crane zone. Alert engine verified.', 'critical');
+          return;
+        }
+        const p = path[step];
+        simWorkerDot.setAttribute('transform', `translate(${p.x}, ${p.y})`);
+        step++;
+      }, 350);
+    });
+  </script>
+</AppLayout>
+
+<style>
+  .zones-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  .header-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .site-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .zones-editor-layout {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: var(--space-6);
+  }
+
+  .canvas-editor-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .editor-toolbar {
+    background: var(--color-surface-elevated);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .tool-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .cam-select {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xs);
+    padding: 4px 8px;
+    color: #FFFFFF;
+    font-size: var(--font-size-xs);
+    outline: none;
+  }
+  .tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xs);
+    color: var(--color-text-secondary);
+    font-size: 11px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+  }
+  .tool-btn.active {
+    background: var(--color-info-dark);
+    color: var(--color-info-light);
+    border-color: var(--color-info-border);
+  }
+
+  .zone-drawing-viewport {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #020617;
+    overflow: hidden;
+  }
+  .zone-bg-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.85;
+  }
+  .zone-svg-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+  }
+  .editor-instructions-hud {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    background: rgba(11, 18, 32, 0.9);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xs);
+    padding: 4px 8px;
+    text-align: center;
+  }
+  .hud-text {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-info-light);
+  }
+
+  .geometry-status-bar {
+    background: var(--color-surface-elevated);
+    border-top: 1px solid var(--color-border);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--color-safe-light);
+  }
+
+  .zone-config-panel {
+    display: flex;
+    flex-direction: column;
+  }
+  .zone-rule-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+  .form-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+  .form-input {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    color: #FFFFFF;
+    font-size: var(--font-size-xs);
+    outline: none;
+  }
+  .recipients-checks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--color-surface-elevated);
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+  }
+  .check-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+  }
+
+  .active-zones-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .zone-list-item {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .zone-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .zone-item-name {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  @media (max-width: 1024px) {
+    .zones-editor-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

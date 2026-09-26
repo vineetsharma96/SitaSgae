@@ -1,0 +1,329 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import Badge from '../../components/ui/Badge.astro';
+import Button from '../../components/ui/Button.astro';
+import Icon from '../../components/ui/Icon.astro';
+import { mockIncidents } from '../../lib/mockData';
+---
+
+<AppLayout title="Incident Management Log" currentPath="/incidents">
+  <div class="incident-list-header">
+    <div class="header-titles">
+      <div class="site-tag">
+        <span class="badge-dot" style="background: var(--color-warning);"></span>
+        <span class="text-metadata">OSHA & PROJECT SAFETY LOG</span>
+      </div>
+      <h1 class="text-page-title">Safety Incident Directory</h1>
+    </div>
+
+    <!-- Export & Bulk Actions -->
+    <div class="header-actions">
+      <Button variant="secondary" size="sm" onclick="alert('Exporting verified CSV compliance log...');">
+        <Icon name="download" size={14} />
+        Export CSV Audit
+      </Button>
+      <Button href="/alerts" variant="danger" size="sm">
+        <Icon name="alert-triangle" size={14} />
+        View Active Alerts (2)
+      </Button>
+    </div>
+  </div>
+
+  <!-- Filter & Search Toolbar (Priority 3.7) -->
+  <div class="filter-toolbar panel">
+    <div class="search-input-box">
+      <Icon name="search" size={16} color="#64748B" />
+      <input
+        type="search"
+        id="incident-search-input"
+        placeholder="Filter by keyword, tracking ID, camera, or zone..."
+        class="search-field"
+      />
+    </div>
+
+    <div class="toolbar-filters">
+      <div class="filter-group" role="tablist">
+        <button type="button" class="filter-tab active" data-filter="all">All ({mockIncidents.length})</button>
+        <button type="button" class="filter-tab" data-filter="critical">Critical (2)</button>
+        <button type="button" class="filter-tab" data-filter="warning">Warning (2)</button>
+        <button type="button" class="filter-tab" data-filter="resolved">Resolved (1)</button>
+      </div>
+
+      <select class="select-filter" id="select-camera-filter" aria-label="Filter by camera source">
+        <option value="all">All Cameras</option>
+        <option value="CAM-014">CAM-014 (Tower Crane)</option>
+        <option value="CAM-008">CAM-008 (Excavation)</option>
+        <option value="CAM-021">CAM-021 (Scaffold)</option>
+        <option value="CAM-003">CAM-003 (Hoist)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- High-Density Incident Table -->
+  <div class="table-card panel">
+    <table class="incident-master-table" aria-label="Master Safety Incidents List">
+      <thead>
+        <tr>
+          <th>Evidence & ID</th>
+          <th>Incident Description</th>
+          <th>Location / Level</th>
+          <th>Source Camera</th>
+          <th>Timestamp</th>
+          <th>Severity</th>
+          <th>Status</th>
+          <th>Assignee</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="incidents-table-body">
+        {mockIncidents.map((inc) => (
+          <tr
+            class="incident-row"
+            data-severity={inc.severity}
+            data-status={inc.status}
+            data-camera={inc.cameraId}
+            data-search={`${inc.id} ${inc.title} ${inc.location} ${inc.cameraId}`.toLowerCase()}
+          >
+            <td>
+              <div class="evidence-thumb-cell">
+                <img src={inc.evidenceThumbnail} alt="" class="table-thumb" width="56" height="34" />
+                <span class="incident-code">{inc.id}</span>
+              </div>
+            </td>
+            <td>
+              <a href={`/incidents/${inc.id}`} class="incident-title-link">
+                {inc.title}
+              </a>
+              <p class="text-caption" style="margin-top: 2px;">
+                Confidence {Math.round(inc.aiConfidence * 100)}% • Model YOLO-SafeConst
+              </p>
+            </td>
+            <td>
+              <span class="location-text">{inc.location}</span>
+            </td>
+            <td>
+              <span class="hud-tag">{inc.cameraId}</span>
+            </td>
+            <td>
+              <span class="text-metadata">{inc.timestamp}</span>
+            </td>
+            <td>
+              <Badge variant={inc.severity} text={inc.severity.toUpperCase()} />
+            </td>
+            <td>
+              <Badge variant={inc.status === 'resolved' ? 'safe' : 'warning'} text={inc.status.replace('_', ' ')} />
+            </td>
+            <td>
+              <span class="assignee-text">{inc.assignee ? inc.assignee.name : 'Unassigned'}</span>
+            </td>
+            <td>
+              <Button href={`/incidents/${inc.id}`} variant="secondary" size="sm">
+                Investigate
+              </Button>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('incident-search-input') as HTMLInputElement | null;
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const cameraSelect = document.getElementById('select-camera-filter') as HTMLSelectElement | null;
+    const rows = document.querySelectorAll('.incident-row');
+
+    function applyFilters() {
+      const q = searchInput?.value.toLowerCase().trim() || '';
+      const activeTab = document.querySelector('.filter-tab.active')?.getAttribute('data-filter') || 'all';
+      const cam = cameraSelect?.value || 'all';
+
+      rows.forEach(r => {
+        const severity = r.getAttribute('data-severity');
+        const status = r.getAttribute('data-status');
+        const camera = r.getAttribute('data-camera');
+        const searchBlob = r.getAttribute('data-search') || '';
+
+        let matchTab = true;
+        if (activeTab === 'critical') matchTab = severity === 'critical';
+        else if (activeTab === 'warning') matchTab = severity === 'warning';
+        else if (activeTab === 'resolved') matchTab = status === 'resolved';
+
+        let matchCam = true;
+        if (cam !== 'all') matchCam = camera === cam;
+
+        let matchSearch = true;
+        if (q) matchSearch = searchBlob.includes(q);
+
+        if (matchTab && matchCam && matchSearch) {
+          (r as HTMLElement).style.display = 'table-row';
+        } else {
+          (r as HTMLElement).style.display = 'none';
+        }
+      });
+    }
+
+    searchInput?.addEventListener('input', applyFilters);
+    cameraSelect?.addEventListener('change', applyFilters);
+
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        filterTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        applyFilters();
+      });
+    });
+  </script>
+</AppLayout>
+
+<style>
+  .incident-list-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  .header-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .site-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .filter-toolbar {
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+    flex-wrap: wrap;
+  }
+  .search-input-box {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    flex: 1;
+    min-width: 280px;
+  }
+  .search-field {
+    background: transparent;
+    border: none;
+    color: #FFFFFF;
+    font-size: var(--font-size-xs);
+    width: 100%;
+    outline: none;
+  }
+  .toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .filter-group {
+    display: flex;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+  }
+  .filter-tab {
+    padding: 4px 10px;
+    font-size: var(--font-size-2xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+  }
+  .filter-tab.active {
+    background: var(--color-surface);
+    color: #FFFFFF;
+    border: 1px solid var(--color-border-active);
+  }
+  .select-filter {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 5px 10px;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xs);
+    outline: none;
+  }
+  .select-filter option {
+    background: var(--color-surface);
+  }
+
+  .table-card {
+    overflow-x: auto;
+  }
+  .incident-master-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+  }
+  .incident-master-table th, .incident-master-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .incident-master-table th {
+    background: rgba(11, 18, 32, 0.4);
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .evidence-thumb-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .table-thumb {
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--color-border);
+    object-fit: cover;
+  }
+  .incident-code {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+  .incident-title-link {
+    font-weight: 600;
+    color: #FFFFFF;
+    font-size: var(--font-size-sm);
+  }
+  .incident-title-link:hover {
+    color: var(--color-info-light);
+  }
+  .location-text {
+    color: var(--color-text-secondary);
+  }
+  .hud-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-info-light);
+    background: var(--color-surface-elevated);
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
+    border: 1px solid var(--color-border);
+  }
+  .assignee-text {
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+</style>

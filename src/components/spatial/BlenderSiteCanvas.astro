@@ -1,0 +1,857 @@
+---
+interface Props {
+  height?: string;
+  showOverlayUI?: boolean;
+}
+
+const { height = '560px', showOverlayUI = true } = Astro.props;
+---
+
+<div class="blender-scene-container" style={`height: ${height};`} id="blender-scene-wrapper">
+  <!-- Static Fallback Render (Guaranteed Server-Rendered HTML, zero layout shift) -->
+  <div class="static-fallback-view" id="static-fallback-view">
+    <img
+      src="/assets/site_hero_render.png"
+      alt="3D Architectural Visualization of Skyline Tower Alpha with Crane and Safety Envelope"
+      class="fallback-img"
+      loading="eager"
+      width="1280"
+      height="720"
+    />
+    <div class="fallback-badge">
+      <span class="badge-dot" style="background: var(--color-info);"></span>
+      <span class="text-metadata">STATIC 3D SPATIAL PREVIEW (OPTIMIZED FALLBACK)</span>
+    </div>
+  </div>
+
+  <!-- WebGL 3D Interactive Canvas Host -->
+  <canvas id="blender-webgl-canvas" class="webgl-canvas" aria-hidden="true"></canvas>
+
+  <!-- Technical Spatial Overlays (Priority 3.1 & 10) -->
+  {showOverlayUI && (
+    <div class="spatial-hud-overlay" aria-hidden="true">
+      <div class="hud-top-left">
+        <div class="hud-item">
+          <span class="hud-tag">3D SITE COMPLEX</span>
+          <span class="hud-val">METRO_PARK_SECTOR_7.GLB (3 STRUCTURES)</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-tag">DYNAMIC VANTAGE</span>
+          <span class="hud-val" id="hud-vantage-coords">AZIMUTH: 48.0° • ELEV: 33.0°</span>
+        </div>
+        <div class="hud-item hud-hint">
+          <span class="hud-tag" style="color: #60A5FA;">INTERACTION</span>
+          <span class="hud-val">MOVE CURSOR TO ROTATE CAMERA ANGLE</span>
+        </div>
+      </div>
+
+      <div class="hud-bottom-right">
+        <div class="telemetry-box">
+          <div class="telem-row">
+            <span>COMPLEX SCOPE:</span>
+            <span class="telem-accent">TOWER A • STEEL B • PIT C</span>
+          </div>
+          <div class="telem-row">
+            <span>ACTIVE CRANES:</span>
+            <span class="telem-accent">2 HOISTS (TOWER + CRAWLER)</span>
+          </div>
+          <div class="telem-row">
+            <span>DANGER ENVELOPE:</span>
+            <span class="telem-alert">CRANE SWING [ACTIVE]</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
+
+<script>
+  // Progressive Enhancement WebGL Three.js Loader with PBR Textures, Industrial Lighting, and Cursor Orbit
+  async function init3DScene() {
+    const wrapper = document.getElementById('blender-scene-wrapper');
+    const canvas = document.getElementById('blender-webgl-canvas') as HTMLCanvasElement | null;
+    const fallback = document.getElementById('static-fallback-view');
+    const vantageHud = document.getElementById('hud-vantage-coords');
+    if (!canvas || !wrapper) return;
+
+    // Check prefers-reduced-motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) {
+      return;
+    }
+
+    try {
+      const THREE = await import('three');
+      const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+
+      const width = wrapper.clientWidth;
+      const height = wrapper.clientHeight;
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x080E1A);
+      scene.fog = new THREE.FogExp2(0x080E1A, 0.028);
+
+      const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 160);
+
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.25;
+
+      // ==========================================
+      // PROCEDURAL TEXTURE GENERATORS
+      // ==========================================
+
+      // 1. Concrete Formwork Texture with Panel Seams & Tie Holes
+      function createConcreteTexture() {
+        const size = 512;
+        const cv = document.createElement('canvas');
+        cv.width = size;
+        cv.height = size;
+        const ctx = cv.getContext('2d')!;
+
+        // Base concrete tone
+        ctx.fillStyle = '#26303D';
+        ctx.fillRect(0, 0, size, size);
+
+        // Fine concrete stippling / aggregate noise
+        const imgData = ctx.getImageData(0, 0, size, size);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const noise = (Math.random() - 0.5) * 28;
+          data[i] = Math.min(255, Math.max(0, data[i] + noise));
+          data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+          data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+        }
+        ctx.putImageData(imgData, 0, 0);
+
+        // Formwork panel seams (128px grid)
+        ctx.strokeStyle = 'rgba(15, 20, 28, 0.65)';
+        ctx.lineWidth = 3;
+        for (let x = 0; x <= size; x += 128) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, size);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= size; y += 128) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(size, y);
+          ctx.stroke();
+        }
+
+        // Circular tie-rod bolt impressions
+        ctx.fillStyle = '#121720';
+        for (let x = 32; x < size; x += 128) {
+          for (let y = 32; y < size; y += 128) {
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+
+        const texture = new THREE.CanvasTexture(cv);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(2, 2);
+        return texture;
+      }
+
+      // 2. Black & Yellow Hazard Stripes Texture (45° diagonal)
+      function createHazardTexture() {
+        const size = 256;
+        const cv = document.createElement('canvas');
+        cv.width = size;
+        cv.height = size;
+        const ctx = cv.getContext('2d')!;
+
+        // Base safety yellow
+        ctx.fillStyle = '#F59E0B';
+        ctx.fillRect(0, 0, size, size);
+
+        // Diagonal black stripes
+        ctx.fillStyle = '#111827';
+        const stripeWidth = 32;
+        for (let i = -size; i < size * 2; i += stripeWidth * 2) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i + stripeWidth, 0);
+          ctx.lineTo(i + stripeWidth + size, size);
+          ctx.lineTo(i + size, size);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        const texture = new THREE.CanvasTexture(cv);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(6, 1);
+        return texture;
+      }
+
+      // 3. Dark Wet Asphalt Pavement Texture
+      function createAsphaltTexture() {
+        const size = 512;
+        const cv = document.createElement('canvas');
+        cv.width = size;
+        cv.height = size;
+        const ctx = cv.getContext('2d')!;
+
+        ctx.fillStyle = '#0B111A';
+        ctx.fillRect(0, 0, size, size);
+
+        const imgData = ctx.getImageData(0, 0, size, size);
+        const data = imgData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const noise = (Math.random() - 0.5) * 36;
+          data[i] = Math.min(255, Math.max(0, data[i] + noise));
+          data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise + 2));
+          data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise + 6));
+        }
+        ctx.putImageData(imgData, 0, 0);
+
+        const texture = new THREE.CanvasTexture(cv);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(8, 8);
+        return texture;
+      }
+
+      // 4. Brushed Steel Bump / Specular Map
+      function createSteelTexture() {
+        const size = 256;
+        const cv = document.createElement('canvas');
+        cv.width = size;
+        cv.height = size;
+        const ctx = cv.getContext('2d')!;
+
+        ctx.fillStyle = '#718096';
+        ctx.fillRect(0, 0, size, size);
+
+        // Horizontal brush streaks
+        for (let y = 0; y < size; y += 2) {
+          const alpha = 0.05 + Math.random() * 0.15;
+          ctx.fillStyle = Math.random() > 0.5 ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 0, 0, ${alpha})`;
+          ctx.fillRect(0, y, size, 1.5);
+        }
+
+        const texture = new THREE.CanvasTexture(cv);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+      }
+
+      // Instantiate shared procedural textures
+      const concreteTex = createConcreteTexture();
+      const hazardTex = createHazardTexture();
+      const asphaltTex = createAsphaltTexture();
+      const steelTex = createSteelTexture();
+
+      // ==========================================
+      // DRAMATIC INDUSTRIAL LIGHTING SYSTEM
+      // ==========================================
+
+      // Ambient night illumination (deep navy)
+      const ambientLight = new THREE.AmbientLight(0x0E1A2E, 1.6);
+      scene.add(ambientLight);
+
+      // Key Sky Light (Moonlight / High Angle Key)
+      const sunKeyLight = new THREE.DirectionalLight(0xA0C4F4, 2.6);
+      sunKeyLight.position.set(16, 26, 14);
+      sunKeyLight.castShadow = true;
+      sunKeyLight.shadow.mapSize.width = 2048;
+      sunKeyLight.shadow.mapSize.height = 2048;
+      sunKeyLight.shadow.bias = -0.0004;
+      sunKeyLight.shadow.camera.near = 0.5;
+      sunKeyLight.shadow.camera.far = 80;
+      sunKeyLight.shadow.camera.left = -18;
+      sunKeyLight.shadow.camera.right = 18;
+      sunKeyLight.shadow.camera.top = 18;
+      sunKeyLight.shadow.camera.bottom = -18;
+      scene.add(sunKeyLight);
+
+      // Construction Halogen Floodlight 1 (Warm Gold 3200K on Crane Mast pointing at Tower)
+      const mastFloodLight = new THREE.SpotLight(0xFFA726, 130, 45, Math.PI / 4, 0.4, 1.5);
+      mastFloodLight.position.set(3.5, 12.5, 1.5);
+      mastFloodLight.target.position.set(-3.5, 4.0, 0);
+      mastFloodLight.castShadow = true;
+      mastFloodLight.shadow.mapSize.width = 1024;
+      mastFloodLight.shadow.mapSize.height = 1024;
+      scene.add(mastFloodLight);
+      scene.add(mastFloodLight.target);
+
+      // Construction Halogen Floodlight 2 (Warm Golden Spot aimed at Hook & Ground Danger Zone)
+      const hookFloodLight = new THREE.SpotLight(0xFFB74D, 110, 35, Math.PI / 5, 0.35, 1.5);
+      hookFloodLight.position.set(0.0, 12.5, 1.5);
+      hookFloodLight.target.position.set(0.0, 1.0, 1.5);
+      scene.add(hookFloodLight);
+      scene.add(hookFloodLight.target);
+
+      // Ground Facade Up-Light (Warm Amber Uplight illuminating building levels from below)
+      const groundUpLight = new THREE.PointLight(0xFFD54F, 40, 22);
+      groundUpLight.position.set(-3.5, 0.8, 4.5);
+      scene.add(groundUpLight);
+
+      // Cyber-Industrial Cyan Edge Rim Light (Accents steel columns & scaffolding from behind)
+      const cyanRimLight = new THREE.PointLight(0x00E5FF, 65, 30);
+      cyanRimLight.position.set(-9.0, 11.0, -8.0);
+      scene.add(cyanRimLight);
+
+      // Building B High-Power LED Floodlight (Illuminates structural steel frame)
+      const bldBFloodLight = new THREE.SpotLight(0xE0F2FE, 120, 40, Math.PI / 4, 0.35, 1.4);
+      bldBFloodLight.position.set(11.0, 15.0, 9.0);
+      bldBFloodLight.target.position.set(6.5, 4.0, 5.5);
+      bldBFloodLight.castShadow = true;
+      scene.add(bldBFloodLight);
+      scene.add(bldBFloodLight.target);
+
+      // Pit C Substructure Floodlight (Illuminates excavation & concrete pump truck)
+      const pitCFloodLight = new THREE.SpotLight(0xFDE68A, 110, 35, Math.PI / 3.5, 0.4, 1.5);
+      pitCFloodLight.position.set(-5.5, 11.0, 1.5);
+      pitCFloodLight.target.position.set(-8.5, 1.0, 5.5);
+      pitCFloodLight.castShadow = true;
+      scene.add(pitCFloodLight);
+      scene.add(pitCFloodLight.target);
+
+      // Modular Office Security Porch Light
+      const officeLight = new THREE.PointLight(0xFFFBEB, 25, 12);
+      officeLight.position.set(6.2, 2.5, -5.5);
+      scene.add(officeLight);
+
+      // Pulsing Red Danger Alert Beacon (Crane Slewing Hazard Envelope)
+      const redAlertLight = new THREE.PointLight(0xFF1744, 45, 18);
+      redAlertLight.position.set(4.0, 2.5, 1.5);
+      scene.add(redAlertLight);
+
+      // Apex Red Aviation Warning Light atop Tower Crane Mast
+      const apexBeaconLight = new THREE.PointLight(0xFF0033, 25, 10);
+      apexBeaconLight.position.set(4.0, 15.0, 1.5);
+      scene.add(apexBeaconLight);
+
+      // Apex Red Warning Light atop Crawler Crane Boom
+      const crawlerBeaconLight = new THREE.PointLight(0xFF1100, 20, 10);
+      crawlerBeaconLight.position.set(8.5, 10.0, 4.2);
+      scene.add(crawlerBeaconLight);
+
+      // Technical Ground Coordinate Grid (Expanded for mega site)
+      const grid = new THREE.GridHelper(52, 52, 0x3B82F6, 0x1A2840);
+      grid.position.y = 0.02;
+      scene.add(grid);
+
+      // ==========================================
+      // LOAD & TEXTURE GLTF MODEL
+      // ==========================================
+
+      const loader = new GLTFLoader();
+      let craneJib: THREE.Object3D | null = null;
+      let hookBlock: THREE.Object3D | null = null;
+      let suspendedLoad: THREE.Object3D | null = null;
+      let hoistCage: THREE.Object3D | null = null;
+      let dangerRing: THREE.Mesh | null = null;
+
+      loader.load(
+        '/assets/construction_site.glb',
+        (gltf) => {
+          scene.add(gltf.scene);
+
+          // Apply PBR Textures and Shadows to Model Meshes
+          gltf.scene.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              const mesh = child as THREE.Mesh;
+              mesh.castShadow = true;
+              mesh.receiveShadow = true;
+
+              const name = mesh.name.toLowerCase();
+
+              // Concrete Floor Slabs & Tower Core
+              if (name.includes('slab') || name.includes('core')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  map: concreteTex,
+                  bumpMap: concreteTex,
+                  bumpScale: 0.04,
+                  roughness: 0.82,
+                  metalness: 0.08,
+                  color: 0xD1D5DB
+                });
+              }
+              // Safety Guardrails & Boom Arms -> Hazard Stripes
+              else if (name.includes('guardrail') || name.includes('counterweight_0') || name.includes('boom') || name.includes('road_line')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  map: hazardTex,
+                  roughness: 0.38,
+                  metalness: 0.25,
+                  color: 0xFFFFFF
+                });
+              }
+              // Crane Lattice Mast & Jibs -> Industrial Safety Yellow Paint
+              else if (name.includes('crane_mast') || name.includes('crane_jib') || name.includes('counter_jib') || name.includes('apex') || name.includes('cab')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: 0xF59E0B,
+                  roughness: 0.35,
+                  metalness: 0.35,
+                  bumpMap: steelTex,
+                  bumpScale: 0.015
+                });
+              }
+              // Steel Columns, Scaffolding, Rods, Cables -> Galvanized Steel
+              else if (name.includes('col_') || name.includes('scaff_') || name.includes('cables') || name.includes('load') || name.includes('pole')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  map: steelTex,
+                  color: 0x94A3B8,
+                  roughness: 0.26,
+                  metalness: 0.88
+                });
+              }
+              // Ground Slab -> Textured Dark Asphalt Pavement
+              else if (name.includes('ground') || name.includes('foundation')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  map: asphaltTex,
+                  roughness: 0.88,
+                  metalness: 0.15,
+                  color: 0x94A3B8
+                });
+              }
+              // Glowing Emissive Danger Envelope Ring
+              else if (name.includes('danger_envelope_ring') || name.includes('danger_ring')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: 0xFF1744,
+                  emissive: new THREE.Color(0xFF1744),
+                  emissiveIntensity: 3.5,
+                  roughness: 0.2,
+                  metalness: 0.1
+                });
+                dangerRing = mesh;
+              }
+              // Crane Operator Cab Window Glass
+              else if (name.includes('window') || name.includes('glass')) {
+                mesh.material = new THREE.MeshPhysicalMaterial({
+                  color: 0x38BDF8,
+                  metalness: 0.9,
+                  roughness: 0.05,
+                  transmission: 0.6,
+                  transparent: true,
+                  opacity: 0.85
+                });
+              }
+              // Excavator & Machinery Bodies
+              else if (name.includes('excavator') || name.includes('body')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: 0xEA580C,
+                  roughness: 0.35,
+                  metalness: 0.35
+                });
+              }
+              // Wooden Pallets
+              else if (name.includes('pallet')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: 0x78350F,
+                  roughness: 0.92,
+                  metalness: 0.05
+                });
+              }
+              // Building B Structural Steel Columns (Red-orange primer)
+              else if (name.includes('bld_b_col')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: 0xEA580C,
+                  metalness: 0.78,
+                  roughness: 0.32,
+                  bumpMap: steelTex,
+                  bumpScale: 0.02
+                });
+              }
+              // Building B Girders & Corrugated Metal Decks
+              else if (name.includes('bld_b_deck') || name.includes('bld_b_beam')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  map: steelTex,
+                  color: 0x94A3B8,
+                  metalness: 0.82,
+                  roughness: 0.28
+                });
+              }
+              // Building B Exterior Hoist (Elevator) Mast & Cage
+              else if (name.includes('bld_b_hoist')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: 0xF59E0B,
+                  metalness: 0.65,
+                  roughness: 0.35
+                });
+              }
+              // Building C Excavation Shoring Retaining Walls & Footing Raft
+              else if (name.includes('bld_c_shoring') || name.includes('bld_c_foundation')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  map: concreteTex,
+                  bumpMap: concreteTex,
+                  bumpScale: 0.05,
+                  color: 0x9CA3AF,
+                  roughness: 0.9,
+                  metalness: 0.05
+                });
+              }
+              // Building C Plywood Shuttering Core Formwork
+              else if (name.includes('bld_c_formwork')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: 0x92400E,
+                  roughness: 0.85,
+                  metalness: 0.05
+                });
+              }
+              // Building C Steel Rebar Starter Bars
+              else if (name.includes('bld_c_rebar')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: 0x7C2D12,
+                  roughness: 0.65,
+                  metalness: 0.72
+                });
+              }
+              // Concrete Pump Truck (Chassis & Boom)
+              else if (name.includes('truck_pump') || name.includes('truck_outrigger')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: name.includes('boom') ? 0xEF4444 : 0xF8FAFC,
+                  metalness: 0.5,
+                  roughness: 0.25
+                });
+              }
+              // Modular Site HQ Office Containers
+              else if (name.includes('conex_office')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: name.includes('upper') ? 0xF1F5F9 : 0x1E40AF,
+                  roughness: 0.42,
+                  metalness: 0.55
+                });
+              }
+              // Mobile Crawler Crane
+              else if (name.includes('crane_crawler')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: name.includes('track') || name.includes('cwt') ? 0x1E293B : 0xF59E0B,
+                  metalness: name.includes('track') ? 0.8 : 0.45,
+                  roughness: 0.35
+                });
+              }
+              // Concrete Jersey Safety Barriers
+              else if (name.includes('jersey_barrier') || name.includes('barrier')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  color: 0xE2E8F0,
+                  roughness: 0.88,
+                  metalness: 0.05
+                });
+              }
+              // Precast Concrete Pipes
+              else if (name.includes('staging_precast_pipe')) {
+                mesh.material = new THREE.MeshStandardMaterial({
+                  map: concreteTex,
+                  color: 0xCBD5E1,
+                  roughness: 0.75,
+                  metalness: 0.05
+                });
+              }
+            }
+
+            // Identify animated nodes
+            if (child.name.includes('crane_jib')) {
+              craneJib = child;
+            }
+            if (child.name.includes('hook_block')) {
+              hookBlock = child;
+            }
+            if (child.name.includes('suspended_load')) {
+              suspendedLoad = child;
+            }
+            if (child.name.includes('bld_b_hoist_cage')) {
+              hoistCage = child;
+            }
+          });
+
+          // Model loaded: smooth fade transition from static render
+          if (fallback) {
+            fallback.style.opacity = '0';
+            setTimeout(() => {
+              fallback.style.display = 'none';
+            }, 400);
+          }
+        },
+        undefined,
+        (err) => {
+          console.warn('3D GLB load fallback active:', err);
+        }
+      );
+
+      // ==========================================
+      // CURSOR & POINTER ORBIT CAMERA SYSTEM
+      // ==========================================
+
+      let targetNormX = 0;
+      let targetNormY = 0;
+      let currentNormX = 0;
+      let currentNormY = 0;
+      let isDragging = false;
+      let previousPointerX = 0;
+      let previousPointerY = 0;
+
+      // Track cursor over window
+      window.addEventListener('mousemove', (e) => {
+        targetNormX = (e.clientX / window.innerWidth - 0.5) * 2;
+        targetNormY = (e.clientY / window.innerHeight - 0.5) * 2;
+      }, { passive: true });
+
+      // Direct drag-to-orbit support
+      canvas.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        previousPointerX = e.clientX;
+        previousPointerY = e.clientY;
+        canvas.setPointerCapture(e.pointerId);
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        const deltaX = (e.clientX - previousPointerX) * 0.005;
+        const deltaY = (e.clientY - previousPointerY) * 0.005;
+        targetNormX += deltaX * 2;
+        targetNormY += deltaY * 2;
+        previousPointerX = e.clientX;
+        previousPointerY = e.clientY;
+      });
+
+      canvas.addEventListener('pointerup', (e) => {
+        isDragging = false;
+        canvas.releasePointerCapture(e.pointerId);
+      });
+
+      // Scroll-driven altitude / dolly progression
+      let scrollProgress = 0;
+      window.addEventListener('scroll', () => {
+        const rect = wrapper.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        scrollProgress = Math.max(0, Math.min(1, (windowHeight - rect.top) / (windowHeight + rect.height)));
+      }, { passive: true });
+
+      // Resize listener
+      window.addEventListener('resize', () => {
+        if (!wrapper) return;
+        const w = wrapper.clientWidth;
+        const h = wrapper.clientHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      });
+
+      // Camera Orbit Constants (Framed for full 3-building complex)
+      const baseDistance = 28.5;
+      const baseAzimuth = 0.82; // ~47 degrees
+      const baseElevation = 0.58; // ~33 degrees
+      const lookAtCenter = new THREE.Vector3(0.0, 3.6, 0.8);
+
+      const clock = new THREE.Clock();
+      let animId: number;
+
+      const animate = () => {
+        animId = requestAnimationFrame(animate);
+        const elapsedTime = clock.getElapsedTime();
+
+        // Smooth camera lerp towards mouse-directed angle
+        currentNormX += (targetNormX - currentNormX) * 0.06;
+        currentNormY += (targetNormY - currentNormY) * 0.06;
+
+        // Dynamic Azimuth (rotates left/right with cursor)
+        const azimuth = baseAzimuth + currentNormX * 1.1;
+        // Dynamic Elevation (tilts up/down with cursor)
+        const elevation = Math.max(0.14, Math.min(1.22, baseElevation - currentNormY * 0.55));
+        // Distance slightly adjusted by scroll
+        const distance = baseDistance - scrollProgress * 5.0;
+
+        // Spherical to Cartesian camera positioning
+        const camX = lookAtCenter.x + Math.sin(azimuth) * Math.cos(elevation) * distance;
+        const camY = lookAtCenter.y + Math.sin(elevation) * distance + (1.0 - scrollProgress) * 3.5;
+        const camZ = lookAtCenter.z + Math.cos(azimuth) * Math.cos(elevation) * distance;
+
+        camera.position.set(camX, camY, camZ);
+
+        // Smooth look-at target with subtle cursor parallax
+        camera.lookAt(
+          lookAtCenter.x + currentNormX * 2.2,
+          lookAtCenter.y + 1.0 - currentNormY * 1.4,
+          lookAtCenter.z
+        );
+
+        // Update live HUD coordinate text
+        if (vantageHud && Math.floor(elapsedTime * 10) % 2 === 0) {
+          const azDeg = Math.round((azimuth * 180 / Math.PI) % 360);
+          const elDeg = Math.round(elevation * 180 / Math.PI);
+          vantageHud.textContent = `AZIMUTH: ${azDeg}.0° • ELEV: ${elDeg}.0°`;
+        }
+
+        // Tower Crane animations:
+        // Gentle jib slewing
+        if (craneJib) {
+          craneJib.rotation.y = Math.sin(elapsedTime * 0.25) * 0.45;
+        }
+
+        // Subtle pendulum sway on suspended steel load
+        if (suspendedLoad) {
+          suspendedLoad.rotation.z = Math.sin(elapsedTime * 1.2) * 0.04;
+          suspendedLoad.rotation.x = Math.cos(elapsedTime * 0.9) * 0.03;
+        }
+
+        // Building B Construction Elevator Hoist animation (smooth vertical transit)
+        if (hoistCage) {
+          hoistCage.position.z = 3.2 + Math.sin(elapsedTime * 0.5) * 2.5;
+        }
+
+        // Pulse critical alert light and danger ring
+        const pulse = Math.sin(elapsedTime * 3);
+        redAlertLight.intensity = 35 + pulse * 20;
+
+        if (dangerRing && (dangerRing.material as THREE.MeshStandardMaterial).emissiveIntensity !== undefined) {
+          (dangerRing.material as THREE.MeshStandardMaterial).emissiveIntensity = 3.0 + pulse * 1.8;
+        }
+
+        // Blink apex red aviation warning beacon (1Hz flash)
+        const beaconFlash = (Math.sin(elapsedTime * 6) > 0.3) ? 40 : 2;
+        apexBeaconLight.intensity = beaconFlash;
+
+        // Alternate beacon flash on crawler crane boom
+        const crawlerFlash = (Math.sin(elapsedTime * 6 + 1.5) > 0.3) ? 35 : 2;
+        crawlerBeaconLight.intensity = crawlerFlash;
+
+        renderer.render(scene, camera);
+      };
+
+      animate();
+    } catch (e) {
+      console.warn('WebGL initialization error, using static fallback:', e);
+    }
+  }
+
+  // Defer initialization to idle
+  if (typeof window !== 'undefined') {
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(init3DScene);
+    } else {
+      setTimeout(init3DScene, 200);
+    }
+  }
+</script>
+
+<style>
+  .blender-scene-container {
+    position: relative;
+    width: 100%;
+    background: #0B1220;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    cursor: grab;
+  }
+  .blender-scene-container:active {
+    cursor: grabbing;
+  }
+  .static-fallback-view {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    transition: opacity var(--duration-normal) ease;
+  }
+  .fallback-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .fallback-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    background: rgba(11, 18, 32, 0.9);
+    border: 1px solid var(--color-border);
+    padding: 4px 10px;
+    border-radius: var(--radius-xs);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .webgl-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    display: block;
+  }
+  .spatial-hud-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .hud-top-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .hud-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(11, 18, 32, 0.85);
+    border: 1px solid var(--color-border-subtle);
+    border-left: 2px solid var(--color-info);
+    padding: 3px 8px;
+    border-radius: var(--radius-xs);
+    width: fit-content;
+  }
+  .hud-hint {
+    border-left-color: #60A5FA;
+    background: rgba(17, 24, 39, 0.9);
+  }
+  .hud-tag {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--color-info-light);
+    font-weight: 700;
+  }
+  .hud-val {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #F8FAFC;
+  }
+  .hud-bottom-right {
+    align-self: flex-end;
+  }
+  .telemetry-box {
+    background: rgba(11, 18, 32, 0.88);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 220px;
+  }
+  .telem-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+  .telem-accent {
+    color: var(--color-info-light);
+    font-weight: 600;
+  }
+  .telem-alert {
+    color: var(--color-critical-light);
+    font-weight: 700;
+  }
+</style>
+

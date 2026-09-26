@@ -1,0 +1,42 @@
+---
+interface Props {
+  title?: string;
+  subtitle?: string;
+  badge?: string;
+  badgeVariant?: 'safe' | 'warning' | 'critical' | 'info' | 'muted';
+  class?: string;
+  id?: string;
+}
+
+const {
+  title,
+  subtitle,
+  badge,
+  badgeVariant = 'info',
+  class: className = '',
+  id
+} = Astro.props;
+---
+
+<div class={`panel technical-corner ${className}`} id={id}>
+  {(title || Astro.slots.has('header-actions')) && (
+    <div class="panel-header">
+      <div>
+        {title && <h3 class="text-card-title">{title}</h3>}
+        {subtitle && <p class="text-metadata" style="margin-top: 2px;">{subtitle}</p>}
+      </div>
+      <div style="display: flex; align-items: center; gap: var(--space-2);">
+        {badge && (
+          <span class={`badge badge-${badgeVariant}`}>
+            <span class="badge-dot" />
+            {badge}
+          </span>
+        )}
+        <slot name="header-actions" />
+      </div>
+    </div>
+  )}
+  <div class="panel-body">
+    <slot />
+  </div>
+</div>

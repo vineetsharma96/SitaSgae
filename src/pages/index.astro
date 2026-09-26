@@ -1,0 +1,555 @@
+---
+import MarketingLayout from '../layouts/MarketingLayout.astro';
+import BlenderSiteCanvas from '../components/spatial/BlenderSiteCanvas.astro';
+import Icon from '../components/ui/Icon.astro';
+import Button from '../components/ui/Button.astro';
+---
+
+<MarketingLayout title="SiteSage — Intelligent AI Construction Safety Command Center">
+  <!-- Cinematic Hero Section with Blender Spatial 3D Environment -->
+  <section class="hero-section" aria-labelledby="hero-heading">
+    <div class="hero-bg-spatial">
+      <!-- Progressive Enhancement 3D Blender Construction Model -->
+      <BlenderSiteCanvas height="720px" showOverlayUI={true} />
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-pill fade-in">
+        <span class="badge-dot" style="background: var(--color-safe); box-shadow: 0 0 8px var(--color-safe);"></span>
+        <span class="text-metadata">SITESAGE INDUSTRIAL SAFETY OS v3.4</span>
+        <span class="pill-divider">/</span>
+        <span class="pill-sub">EDGE AI VISION READY</span>
+      </div>
+
+      <h1 id="hero-heading" class="text-display hero-title scroll-bend-target">
+        See your site.<br />
+        <span class="title-gradient">Detect risks.</span><br />
+        Act faster.
+      </h1>
+
+      <p class="hero-subtitle">
+        SiteSage turns standard jobsite camera streams into an automated safety intelligence system. Detect missing PPE, restricted zone breaches, and crane hoist hazards in real-time before accidents happen.
+      </p>
+
+      <div class="hero-actions">
+        <Button href="/dashboard" variant="primary" size="lg" id="hero-cta-launch">
+          Launch Command Center
+          <Icon name="arrow-right" size={18} />
+        </Button>
+        <Button href="#how-it-works" variant="secondary" size="lg" id="hero-cta-learn">
+          <Icon name="video" size={18} color="#94A3B8" />
+          See How It Works
+        </Button>
+      </div>
+
+      <!-- Trust Metrics Bar -->
+      <div class="hero-stats-row">
+        <div class="stat-item">
+          <span class="stat-number">48ms</span>
+          <span class="stat-label">Edge Inference Latency</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-number">99.4%</span>
+          <span class="stat-label">PPE Detection Accuracy</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-number">Zero</span>
+          <span class="stat-label">Facial Recognition (Privacy First)</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Priority 3.1: Interactive Product Preview (Loop Demonstration) -->
+  <section class="section-container" id="how-it-works">
+    <div class="section-header">
+      <div class="tag-row">
+        <span class="badge badge-info">OPERATIONAL LOOP</span>
+        <span class="text-metadata">SIMULATED WORKFLOW PROOF</span>
+      </div>
+      <h2 class="text-page-title" style="margin-top: 8px;">
+        «SEE → DETECT → ALERT → INVESTIGATE → ACT → REPORT»
+      </h2>
+      <p class="text-body" style="max-width: 680px; margin-top: 8px;">
+        Every detection preserves full context: from the source RTSP camera lens, to AI spatial bounding boxes, instant supervisor dispatch, and verifiable compliance audit trails.
+      </p>
+    </div>
+
+    <!-- Interactive 6-Step Workflow Preview Grid -->
+    <div class="workflow-steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-icon">
+          <Icon name="camera" size={24} color="#3B82F6" />
+        </div>
+        <h3 class="text-card-title">1. Existing Cameras</h3>
+        <p class="text-caption">
+          Connect RTSP/HLS feeds from Axis, Hikvision, Dahua, or mobile solar trailers with zero hardware replacement.
+        </p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-icon">
+          <Icon name="eye" size={24} color="#60A5FA" />
+        </div>
+        <h3 class="text-card-title">2. Edge Vision AI</h3>
+        <p class="text-caption">
+          Sub-50ms inference identifies workers, helmets, high-vis vests, harnesses, and heavy equipment trajectories.
+        </p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-icon">
+          <Icon name="alert-triangle" size={24} color="#EF4444" />
+        </div>
+        <h3 class="text-card-title">3. Instant Critical Alert</h3>
+        <p class="text-caption">
+          Safety breaches trigger audible sirens, push notifications, and high-priority command center interrupts.
+        </p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">04</div>
+        <div class="step-icon">
+          <Icon name="shield-alert" size={24} color="#F59E0B" />
+        </div>
+        <h3 class="text-card-title">4. Evidence Workspace</h3>
+        <p class="text-caption">
+          Supervisors review 4K video clips, bounding boxes, spatial coordinates, and AI confidence telemetry.
+        </p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">05</div>
+        <div class="step-icon">
+          <Icon name="check-circle" size={24} color="#10B981" />
+        </div>
+        <h3 class="text-card-title">5. Field Action</h3>
+        <p class="text-caption">
+          1-tap Acknowledge, radio dispatch to safety marshals, crane interlock hold, and tracked remediation.
+        </p>
+      </div>
+
+      <div class="step-card">
+        <div class="step-num">06</div>
+        <div class="step-icon">
+          <Icon name="bar-chart" size={24} color="#38BDF8" />
+        </div>
+        <h3 class="text-card-title">6. Audit & Analytics</h3>
+        <p class="text-caption">
+          Automated OSHA compliance logs, subcontractor safety ratings, and predictive hazard trend curves.
+        </p>
+      </div>
+    </div>
+
+    <!-- Live Interactive Evidence Preview Box -->
+    <div class="demo-evidence-preview">
+      <div class="preview-header">
+        <div class="preview-title-box">
+          <span class="badge-dot" style="background: var(--color-critical);"></span>
+          <span class="text-card-title">LIVE INCIDENT STREAM: CAM-014 (LEVEL 08 HOIST)</span>
+        </div>
+        <span class="badge badge-critical">AI DETECTED • HIGH CONFIDENCE 96.4%</span>
+      </div>
+
+      <div class="preview-body">
+        <div class="preview-media-frame">
+          <img
+            src="/assets/evidence-helmet-crane.svg"
+            alt="Simulated live video evidence with computer vision detection bounding boxes"
+            class="evidence-render"
+          />
+        </div>
+
+        <div class="preview-data-sidebar">
+          <div class="sidebar-block">
+            <span class="text-metadata">EVENT CLASSIFICATION</span>
+            <p class="data-val-danger">Critical PPE Breach — Missing Safety Helmet</p>
+            <p class="text-caption" style="margin-top: 4px;">
+              Worker identified inside 4.5m slewing envelope under active crane hoist load.
+            </p>
+          </div>
+
+          <div class="sidebar-block">
+            <span class="text-metadata">SYSTEM RECOMMENDATION</span>
+            <p class="data-val-action">
+              «Halt crane cycle immediately. Radio Sector 4 Lead Marshal Marcus Vance.»
+            </p>
+          </div>
+
+          <div class="sidebar-actions">
+            <Button href="/incidents/INC-2026-0881" variant="danger" size="md">
+              Investigate Incident
+              <Icon name="arrow-right" size={14} />
+            </Button>
+            <Button href="/dashboard" variant="secondary" size="md">
+              Open Live Stream
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Priority 3.1 & 6: Privacy, Trust, and Enterprise Security -->
+  <section class="section-container" id="capabilities">
+    <div class="trust-grid">
+      <div class="trust-card">
+        <div class="trust-icon-box">
+          <Icon name="shield-check" size={28} color="#10B981" />
+        </div>
+        <h3 class="text-section-heading">Worker Privacy First</h3>
+        <p class="text-body" style="margin-top: 8px;">
+          SiteSage is built exclusively for hazard mitigation, not worker surveillance. All computer vision models operate on anonymized skeletal silhouettes with <strong>strict zero facial recognition</strong>.
+        </p>
+        <ul class="trust-checklist">
+          <li><Icon name="check" size={14} color="#10B981" /> Anonymized temporary tracking IDs</li>
+          <li><Icon name="check" size={14} color="#10B981" /> Configurable data retention windows (30/60/90 days)</li>
+          <li><Icon name="check" size={14} color="#10B981" /> Role-based audit logging for all evidence access</li>
+        </ul>
+      </div>
+
+      <div class="trust-card">
+        <div class="trust-icon-box">
+          <Icon name="activity" size={28} color="#3B82F6" />
+        </div>
+        <h3 class="text-section-heading">Edge Node Processing</h3>
+        <p class="text-body" style="margin-top: 8px;">
+          All video inference runs locally on site edge servers or ruggedized gateway appliances. Full operational continuity during network or internet outages.
+        </p>
+        <ul class="trust-checklist">
+          <li><Icon name="check" size={14} color="#3B82F6" /> Autonomous local alarm triggers</li>
+          <li><Icon name="check" size={14} color="#3B82F6" /> End-to-end encrypted telemetry transport</li>
+          <li><Icon name="check" size={14} color="#3B82F6" /> Realtime RTSP, WebRTC, and HLS fallback</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bottom CTA Banner -->
+  <section class="section-container cta-banner">
+    <div class="cta-inner">
+      <h2 class="text-display" style="font-size: clamp(2rem, 3.5vw, 3rem);">
+        Ready to make your jobsite zero-harm?
+      </h2>
+      <p class="text-body" style="max-width: 580px; margin: 12px auto 24px; color: #CBD5E1;">
+        Connect your cameras to SiteSage in under 30 minutes and experience automated safety intelligence.
+      </p>
+      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+        <Button href="/dashboard" variant="primary" size="lg">
+          Launch Command Center
+          <Icon name="arrow-right" size={18} />
+        </Button>
+        <Button href="/login" variant="secondary" size="lg">
+          Sign In to Project
+        </Button>
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
+
+<style>
+  .hero-section {
+    position: relative;
+    min-height: 85vh;
+    display: flex;
+    align-items: center;
+    padding: var(--space-12) var(--space-6);
+    overflow: hidden;
+  }
+  .hero-bg-spatial {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.85;
+    pointer-events: none;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(11, 18, 32, 0.88);
+    border: 1px solid var(--color-border);
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    margin-bottom: var(--space-6);
+    backdrop-filter: blur(8px);
+  }
+  .pill-divider {
+    color: var(--color-border);
+    font-size: 12px;
+  }
+  .pill-sub {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2xs);
+    color: var(--color-info-light);
+    font-weight: 600;
+  }
+  .hero-title {
+    margin-bottom: var(--space-4);
+  }
+  .title-gradient {
+    background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 50%, #93C5FD 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-subtitle {
+    font-size: clamp(1rem, 1.3vw, 1.25rem);
+    color: #CBD5E1;
+    line-height: 1.6;
+    max-width: 680px;
+    margin-bottom: var(--space-8);
+  }
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-12);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .hero-stats-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    background: rgba(17, 24, 39, 0.85);
+    border: 1px solid var(--color-border);
+    padding: var(--space-4) var(--space-8);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(12px);
+  }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .stat-number {
+    font-family: var(--font-display);
+    font-size: var(--font-size-2xl);
+    font-weight: 800;
+    color: #FFFFFF;
+    line-height: 1.1;
+  }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2xs);
+    color: var(--color-text-muted);
+    margin-top: 4px;
+    letter-spacing: 0.04em;
+  }
+  .stat-divider {
+    width: 1px;
+    height: 36px;
+    background: var(--color-border);
+  }
+
+  .section-container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: var(--space-16) var(--space-6);
+  }
+  .section-header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: var(--space-12);
+  }
+  .tag-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .workflow-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-12);
+  }
+  .step-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    transition: transform var(--duration-fast), border-color var(--duration-fast);
+  }
+  .step-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--color-border-active);
+  }
+  .step-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-weight: 700;
+  }
+  .step-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px 0;
+  }
+
+  .demo-evidence-preview {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+  .preview-header {
+    background: var(--color-surface-elevated);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .preview-title-box {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .preview-body {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    min-height: 400px;
+  }
+  .preview-media-frame {
+    background: #020617;
+    position: relative;
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .evidence-render {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .preview-data-sidebar {
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-4);
+    background: var(--color-surface);
+  }
+  .sidebar-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .data-val-danger {
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    color: var(--color-critical-light);
+  }
+  .data-val-action {
+    font-size: var(--font-size-sm);
+    color: #F8FAFC;
+    font-style: italic;
+    background: var(--color-surface-elevated);
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--color-warning);
+  }
+  .sidebar-actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-top: auto;
+  }
+
+  .trust-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-8);
+  }
+  .trust-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+  }
+  .trust-icon-box {
+    width: 52px;
+    height: 52px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-4);
+  }
+  .trust-checklist {
+    list-style: none;
+    margin-top: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .trust-checklist li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+  }
+
+  .cta-banner {
+    text-align: center;
+  }
+  .cta-inner {
+    background: radial-gradient(ellipse at 50% 0%, rgba(37, 99, 235, 0.2) 0%, rgba(17, 24, 39, 0.95) 75%);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-12) var(--space-6);
+  }
+
+  @media (max-width: 900px) {
+    .preview-body {
+      grid-template-columns: 1fr;
+    }
+    .preview-media-frame {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+    }
+    .trust-grid {
+      grid-template-columns: 1fr;
+    }
+    .hero-stats-row {
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+    .stat-divider {
+      display: none;
+    }
+  }
+</style>

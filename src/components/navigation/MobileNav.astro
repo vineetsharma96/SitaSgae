@@ -1,0 +1,110 @@
+---
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  currentPath?: string;
+  criticalAlertCount?: number;
+}
+
+const { currentPath = '', criticalAlertCount = 2 } = Astro.props;
+
+const items = [
+  { name: 'Dashboard', href: '/dashboard', icon: 'layers' },
+  { name: 'Live', href: '/live-monitoring', icon: 'video' },
+  { name: 'Alerts', href: '/alerts', icon: 'alert-triangle', badge: criticalAlertCount },
+  { name: 'Incidents', href: '/incidents', icon: 'shield-alert' },
+  { name: 'Reports', href: '/reports', icon: 'bar-chart' },
+  { name: 'More', href: '/cameras', icon: 'sliders' }
+];
+---
+
+<nav class="mobile-nav-bar" aria-label="Mobile Field Navigation">
+  <div class="mobile-nav-grid">
+    {items.map((item) => {
+      const isActive = currentPath === item.href || (item.href !== '/dashboard' && currentPath.startsWith(item.href));
+      return (
+        <a
+          href={item.href}
+          class={`mobile-nav-link ${isActive ? 'active' : ''}`}
+          aria-current={isActive ? 'page' : undefined}
+        >
+          <div class="icon-container">
+            <Icon name={item.icon} size={20} />
+            {item.badge && item.badge > 0 && (
+              <span class="mobile-badge" aria-label={`${item.badge} critical alerts`}>
+                {item.badge}
+              </span>
+            )}
+          </div>
+          <span class="mobile-label">{item.name}</span>
+        </a>
+      );
+    })}
+  </div>
+</nav>
+
+<style>
+  .mobile-nav-bar {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    z-index: var(--z-sticky);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .mobile-nav-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    height: 100%;
+    align-items: center;
+  }
+  .mobile-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    height: 100%;
+    font-size: 11px;
+    font-weight: 500;
+    transition: color var(--duration-fast);
+  }
+  .mobile-nav-link.active {
+    color: var(--color-info-light);
+    font-weight: 700;
+  }
+  .icon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mobile-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    background: var(--color-critical);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: var(--radius-pill);
+    min-width: 14px;
+    text-align: center;
+  }
+  .mobile-label {
+    line-height: 1;
+  }
+
+  @media (max-width: 1024px) {
+    .mobile-nav-bar {
+      display: block;
+    }
+  }
+</style>

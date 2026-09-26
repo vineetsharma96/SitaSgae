@@ -1,0 +1,336 @@
+---
+import { mockCameras, mockZones } from '../../lib/mockData';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  height?: string;
+  activeCameraId?: string;
+  showControls?: boolean;
+}
+
+const { height = '380px', activeCameraId, showControls = true } = Astro.props;
+---
+
+<div class="sitemap-container" style={`height: ${height};`} aria-label="Interactive 2D Construction Site Plan">
+  <!-- Viewport Action Toolbar -->
+  {showControls && (
+    <div class="sitemap-toolbar">
+      <div class="toolbar-left">
+        <span class="tool-tag">PROJECTION: 2D TOPOLOGICAL</span>
+        <span class="tool-divider">|</span>
+        <span class="tool-meta">SCALE: 1:500 (METRIC)</span>
+      </div>
+      <div class="toolbar-right">
+        <button type="button" class="tool-btn" id="sitemap-view-table-btn" title="Toggle Accessible List View">
+          <Icon name="layers" size={12} />
+          <span>List View</span>
+        </button>
+        <button type="button" class="tool-btn" id="sitemap-reset-btn" title="Reset Viewport">
+          <Icon name="refresh" size={12} />
+          <span>Reset</span>
+        </button>
+      </div>
+    </div>
+  )}
+
+  <!-- 2D SVG Spatial Map Canvas -->
+  <div class="svg-viewport" id="sitemap-viewport">
+    <svg viewBox="0 0 1000 650" class="site-svg" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <!-- Technical Grid Pattern -->
+        <pattern id="siteGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(59, 130, 246, 0.08)" stroke-width="0.75" />
+          <circle cx="0" cy="0" r="1.5" fill="rgba(96, 165, 250, 0.25)" />
+        </pattern>
+
+        <!-- Camera Coverage Gradient -->
+        <radialGradient id="camArcGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="scale(180)">
+          <stop offset="0%" stop-color="rgba(59, 130, 246, 0.35)" />
+          <stop offset="70%" stop-color="rgba(59, 130, 246, 0.12)" />
+          <stop offset="100%" stop-color="rgba(59, 130, 246, 0)" />
+        </radialGradient>
+
+        <radialGradient id="camArcActive" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="scale(220)">
+          <stop offset="0%" stop-color="rgba(239, 68, 68, 0.45)" />
+          <stop offset="75%" stop-color="rgba(239, 68, 68, 0.15)" />
+          <stop offset="100%" stop-color="rgba(239, 68, 68, 0)" />
+        </radialGradient>
+      </defs>
+
+      <!-- Background Grid -->
+      <rect width="1000" height="650" fill="url(#siteGrid)" />
+
+      <!-- Site Massing & Structural Boundaries -->
+      <g class="structural-elements" opacity="0.6">
+        <!-- North Tower Footprint -->
+        <rect x="220" y="100" width="280" height="220" fill="rgba(30, 41, 59, 0.5)" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 2" />
+        <text x="360" y="190" fill="#94A3B8" font-size="12" font-family="JetBrains Mono" text-anchor="middle" font-weight="600">NORTH TOWER CORE (LVL 08)</text>
+
+        <!-- Foundation & Excavation Pit -->
+        <polygon points="580,360 820,340 880,550 560,570" fill="rgba(120, 53, 15, 0.12)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="1.5" />
+        <text x="710" y="470" fill="#FBBF24" font-size="11" font-family="JetBrains Mono" text-anchor="middle">EXCAVATION PIT & SHORING (B2)</text>
+
+        <!-- Staging & Hoist Bay -->
+        <rect x="100" y="320" width="180" height="150" fill="rgba(30, 41, 59, 0.35)" stroke="#334155" stroke-width="1" />
+        <text x="190" y="400" fill="#64748B" font-size="10" font-family="JetBrains Mono" text-anchor="middle">MATERIAL HOIST / BAY</text>
+
+        <!-- Access Gate & Turnstiles -->
+        <line x1="380" y1="600" x2="620" y2="600" stroke="#10B981" stroke-width="2" stroke-dasharray="6 3" />
+        <text x="500" y="625" fill="#34D399" font-size="11" font-family="JetBrains Mono" text-anchor="middle">SOUTH ACCESS TURNSTILES (PPE GATE)</text>
+      </g>
+
+      <!-- Safety Zones Polygons -->
+      <g class="safety-zones">
+        {mockZones.map((zone) => {
+          const points = zone.polygon.map(p => `${p.x * 1000},${p.y * 650}`).join(' ');
+          const isDanger = zone.type === 'danger';
+          const isRestricted = zone.type === 'restricted';
+          const strokeColor = isDanger ? '#EF4444' : isRestricted ? '#F59E0B' : '#3B82F6';
+          const fillColor = isDanger ? 'rgba(239, 68, 68, 0.15)' : isRestricted ? 'rgba(245, 158, 11, 0.12)' : 'rgba(59, 130, 246, 0.10)';
+
+          return (
+            <polygon
+              points={points}
+              fill={fillColor}
+              stroke={strokeColor}
+              stroke-width="1.5"
+              stroke-dasharray="6 4"
+              class="zone-poly"
+              data-zone-id={zone.id}
+            >
+              <title>{`${zone.name} — ${zone.rule}`}</title>
+            </polygon>
+          );
+        })}
+      </g>
+
+      <!-- Camera Cones & Frustums -->
+      <g class="camera-sectors">
+        <!-- CAM-014 (Crane North - Critical Incident Active) -->
+        <g transform="translate(350, 195) rotate(45)">
+          <path d="M 0 0 L 140 -80 A 180 180 0 0 1 140 80 Z" fill="url(#camArcActive)" stroke="rgba(239, 68, 68, 0.4)" stroke-width="1" />
+        </g>
+
+        <!-- CAM-008 (Excavation) -->
+        <g transform="translate(650, 455) rotate(180)">
+          <path d="M 0 0 L 130 -70 A 160 160 0 0 1 130 70 Z" fill="url(#camArcGrad)" stroke="rgba(59, 130, 246, 0.3)" stroke-width="1" />
+        </g>
+
+        <!-- CAM-003 (Hoist Ground) -->
+        <g transform="translate(200, 355) rotate(90)">
+          <path d="M 0 0 L 110 -60 A 140 140 0 0 1 110 60 Z" fill="url(#camArcGrad)" stroke="rgba(59, 130, 246, 0.3)" stroke-width="1" />
+        </g>
+      </g>
+
+      <!-- Camera Mount Markers -->
+      <g class="camera-markers">
+        {mockCameras.map((cam) => {
+          const cx = cam.position.x * 1000;
+          const cy = cam.position.y * 650;
+          const isSelected = activeCameraId === cam.id || cam.id === 'CAM-014';
+          const isOffline = cam.status === 'offline';
+
+          return (
+            <g class="cam-marker-group" transform={`translate(${cx}, ${cy})`} data-camera-id={cam.id}>
+              {isSelected && (
+                <circle cx="0" cy="0" r="16" fill="none" stroke="#EF4444" stroke-width="1.5" class="pulse-cam" />
+              )}
+              <circle
+                cx="0"
+                cy="0"
+                r="7"
+                fill={isOffline ? '#64748B' : isSelected ? '#EF4444' : '#2563EB'}
+                stroke="#FFFFFF"
+                stroke-width="1.5"
+              />
+              <text x="12" y="4" fill="#F8FAFC" font-size="10" font-family="JetBrains Mono" font-weight="600">
+                {cam.id}
+              </text>
+            </g>
+          );
+        })}
+      </g>
+
+      <!-- Worker Location Pins -->
+      <g class="worker-pins">
+        <!-- Worker in violation at CAM-014 zone -->
+        <g transform="translate(420, 260)">
+          <circle cx="0" cy="0" r="5" fill="#EF4444" stroke="#FFFFFF" stroke-width="1.5" />
+          <text x="8" y="3" fill="#EF4444" font-size="9" font-family="JetBrains Mono" font-weight="700">#WK-4491 (NO HELMET)</text>
+        </g>
+        <!-- Compliant worker in Turnstiles -->
+        <g transform="translate(480, 580)">
+          <circle cx="0" cy="0" r="4" fill="#10B981" stroke="#FFFFFF" stroke-width="1" />
+        </g>
+        <g transform="translate(520, 585)">
+          <circle cx="0" cy="0" r="4" fill="#10B981" stroke="#FFFFFF" stroke-width="1" />
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Accessible Table/List Fallback Container (Priority 0, 6 & 10) -->
+  <div class="sitemap-list-fallback" id="sitemap-table-container" style="display: none;">
+    <table class="spatial-table" aria-label="Structured Site Spatial Locations">
+      <thead>
+        <tr>
+          <th>Camera / Entity</th>
+          <th>Location / Level</th>
+          <th>Status</th>
+          <th>Rules & Active Detections</th>
+        </tr>
+      </thead>
+      <tbody>
+        {mockCameras.map((cam) => (
+          <tr>
+            <td style="font-weight: 600;">{cam.id} — {cam.name}</td>
+            <td>{cam.location || cam.level}</td>
+            <td>
+              <span class={`badge badge-${cam.status === 'online' ? 'safe' : 'muted'}`}>
+                {cam.status}
+              </span>
+            </td>
+            <td>{cam.activeRules.join(', ')}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const toggleBtn = document.getElementById('sitemap-view-table-btn');
+  const viewport = document.getElementById('sitemap-viewport');
+  const table = document.getElementById('sitemap-table-container');
+
+  toggleBtn?.addEventListener('click', () => {
+    if (!viewport || !table) return;
+    const isTableView = table.style.display !== 'none';
+    if (isTableView) {
+      table.style.display = 'none';
+      viewport.style.display = 'block';
+      toggleBtn.innerHTML = `<span>List View</span>`;
+    } else {
+      table.style.display = 'block';
+      viewport.style.display = 'none';
+      toggleBtn.innerHTML = `<span>Map View</span>`;
+    }
+  });
+
+  const resetBtn = document.getElementById('sitemap-reset-btn');
+  resetBtn?.addEventListener('click', () => {
+    if (viewport) {
+      viewport.style.transform = 'scale(1)';
+    }
+  });
+</script>
+
+<style>
+  .sitemap-container {
+    position: relative;
+    width: 100%;
+    background: #090E17;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .sitemap-toolbar {
+    height: 32px;
+    background: rgba(17, 24, 39, 0.95);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-3);
+    z-index: 10;
+  }
+  .toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .tool-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-info-light);
+    font-weight: 600;
+  }
+  .tool-divider {
+    color: var(--color-border);
+    font-size: 10px;
+  }
+  .tool-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xs);
+    color: var(--color-text-secondary);
+    font-size: 10px;
+    font-family: var(--font-mono);
+    transition: all var(--duration-fast);
+  }
+  .tool-btn:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text-primary);
+  }
+  .svg-viewport {
+    flex: 1;
+    width: 100%;
+    height: calc(100% - 32px);
+    overflow: hidden;
+  }
+  .site-svg {
+    width: 100%;
+    height: 100%;
+  }
+  .pulse-cam {
+    animation: cam-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    transform-origin: center;
+  }
+  @keyframes cam-ping {
+    0% {
+      r: 8;
+      opacity: 1;
+    }
+    100% {
+      r: 24;
+      opacity: 0;
+    }
+  }
+  .sitemap-list-fallback {
+    flex: 1;
+    padding: var(--space-4);
+    overflow-y: auto;
+    background: var(--color-surface);
+  }
+  .spatial-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+  }
+  .spatial-table th, .spatial-table td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .spatial-table th {
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-weight: 600;
+  }
+</style>

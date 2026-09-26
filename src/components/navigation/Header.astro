@@ -1,0 +1,290 @@
+---
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  activeCriticalCount?: number;
+}
+
+const { activeCriticalCount = 2 } = Astro.props;
+---
+
+<header class="app-header" aria-label="Command Center Global Header">
+  <div class="header-left">
+    <!-- Mobile Brand Icon & Menu Trigger -->
+    <a href="/dashboard" class="mobile-brand" aria-label="Dashboard Home">
+      <div class="brand-box">
+        <Icon name="shield-alert" size={16} color="#3B82F6" />
+      </div>
+      <span class="mobile-brand-title">SITESAGE</span>
+    </a>
+
+    <!-- Site Selector Dropdown -->
+    <div class="site-selector-box">
+      <span class="selector-label">PROJECT SITE:</span>
+      <select class="site-select" aria-label="Select Active Construction Site">
+        <option value="alpha">Skyline Tower Alpha (Active Build)</option>
+        <option value="beta">Metro Transit Hub West (Excavation Phase)</option>
+        <option value="gamma">Harbor Logistics Center (Steel Frame)</option>
+      </select>
+    </div>
+
+    <!-- Live System Health Badge -->
+    <div class="health-pill" title="All edge vision nodes communicating">
+      <span class="badge-dot" style="background: var(--color-safe); box-shadow: 0 0 6px var(--color-safe);"></span>
+      <span class="health-text">EDGE AI ONLINE</span>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <!-- Active Critical Alert Indicator (Priority 3.5 & Priority 6) -->
+    {activeCriticalCount > 0 && (
+      <a href="/alerts" class="critical-alert-indicator" aria-label={`View ${activeCriticalCount} active critical safety alerts`}>
+        <span class="alert-icon-ring">
+          <Icon name="alert-triangle" size={14} color="#FFFFFF" />
+        </span>
+        <span class="alert-label">CRITICAL ALERT:</span>
+        <span class="alert-desc">NO HELMET IN CRANE RADIUS</span>
+        <span class="alert-badge">{activeCriticalCount}</span>
+      </a>
+    )}
+
+    <!-- Live Simulation Time -->
+    <div class="clock-display" id="header-clock" aria-label="Site local time">
+      <Icon name="clock" size={14} color="#64748B" />
+      <span class="clock-text">00:18:45 UTC</span>
+    </div>
+
+    <!-- Profile Action -->
+    <div class="user-chip">
+      <div class="user-avatar" aria-hidden="true">MV</div>
+      <div class="user-info">
+        <span class="user-name">Marcus Vance</span>
+        <span class="user-role">Lead Marshal</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Update header clock in real time
+  function updateTime() {
+    const el = document.querySelector('#header-clock .clock-text');
+    if (el) {
+      const now = new Date();
+      el.textContent = now.toTimeString().split(' ')[0] + ' UTC';
+    }
+  }
+  setInterval(updateTime, 1000);
+</script>
+
+<style>
+  .app-header {
+    height: 56px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-6);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+    margin-left: 240px;
+    width: calc(100% - 240px);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .mobile-brand {
+    display: none;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .mobile-brand-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--font-size-sm);
+    color: #FFFFFF;
+    letter-spacing: 0.05em;
+  }
+  .brand-box {
+    width: 28px;
+    height: 28px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-info-border);
+    border-radius: var(--radius-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .site-selector-box {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+  }
+  .selector-label {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2xs);
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+  .site-select {
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+  }
+  .site-select option {
+    background: var(--color-surface-elevated);
+    color: var(--color-text-primary);
+  }
+  .health-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid var(--color-safe-border);
+    border-radius: var(--radius-sm);
+  }
+  .health-text {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2xs);
+    color: var(--color-safe-light);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .critical-alert-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--color-critical-dark);
+    border: 1px solid var(--color-critical);
+    border-radius: var(--radius-sm);
+    color: #FFFFFF;
+    text-decoration: none;
+    transition: background var(--duration-fast);
+    animation: critical-pulse-glow 2.5s infinite ease-in-out;
+  }
+  .critical-alert-indicator:hover {
+    background: #991B1B;
+  }
+  .alert-icon-ring {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: var(--color-critical);
+    border-radius: 50%;
+  }
+  .alert-label {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2xs);
+    font-weight: 700;
+    color: var(--color-critical-light);
+  }
+  .alert-desc {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+  }
+  .alert-badge {
+    background: #FFFFFF;
+    color: var(--color-critical-dark);
+    font-size: var(--font-size-2xs);
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: var(--radius-xs);
+  }
+  .clock-display {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+  }
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 4px 8px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+    background: var(--color-info-dark);
+    color: var(--color-info-light);
+    border: 1px solid var(--color-info-border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-2xs);
+    font-weight: 700;
+  }
+  .user-info {
+    display: flex;
+    flex-direction: column;
+  }
+  .user-name {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.2;
+  }
+  .user-role {
+    font-size: 10px;
+    color: var(--color-text-muted);
+  }
+
+  @keyframes critical-pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+    }
+    50% {
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .app-header {
+      margin-left: 0;
+      width: 100%;
+      padding: 0 var(--space-4);
+    }
+    .mobile-brand {
+      display: flex;
+    }
+    .site-selector-box {
+      display: none;
+    }
+    .alert-desc {
+      display: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .health-pill, .clock-display {
+      display: none;
+    }
+  }
+</style>

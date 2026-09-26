@@ -1,0 +1,243 @@
+---
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  currentPath?: string;
+}
+
+const { currentPath = '' } = Astro.props;
+
+const navItems = [
+  { name: 'Dashboard', href: '/dashboard', icon: 'layers' },
+  { name: 'Live Monitoring', href: '/live-monitoring', icon: 'video', badge: '18/20', badgeType: 'safe' },
+  { name: 'Critical Alerts', href: '/alerts', icon: 'alert-triangle', badge: '2', badgeType: 'critical' },
+  { name: 'Incidents', href: '/incidents', icon: 'shield-alert', badge: '7', badgeType: 'warning' },
+  { name: 'Reports', href: '/reports', icon: 'bar-chart' },
+  { name: 'Cameras', href: '/cameras', icon: 'camera' },
+  { name: 'Safety Zones', href: '/zones', icon: 'map-pin' },
+  { name: 'System States', href: '/system-states', icon: 'activity', badge: 'Test', badgeType: 'info' }
+];
+---
+
+<aside class="app-sidebar" aria-label="Command Center Main Navigation">
+  <div class="sidebar-brand">
+    <a href="/dashboard" class="brand-link">
+      <div class="brand-box">
+        <Icon name="shield-alert" size={18} color="#3B82F6" />
+      </div>
+      <div class="brand-info">
+        <span class="brand-title">SITESAGE</span>
+        <span class="brand-meta">COMMAND CENTER</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="sidebar-section-title">
+    <span>OPERATIONAL NAVIGATION</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <ul class="nav-list" role="list">
+      {navItems.map((item) => {
+        const isActive = currentPath === item.href || (item.href !== '/dashboard' && currentPath.startsWith(item.href));
+        return (
+          <li class="nav-item">
+            <a
+              href={item.href}
+              class={`nav-anchor ${isActive ? 'active' : ''}`}
+              aria-current={isActive ? 'page' : undefined}
+            >
+              <span class="icon-wrap">
+                <Icon name={item.icon} size={16} />
+              </span>
+              <span class="nav-label">{item.name}</span>
+              {item.badge && (
+                <span class={`nav-badge badge-${item.badgeType}`}>
+                  {item.badge}
+                </span>
+              )}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="site-status-card">
+      <div class="status-top">
+        <span class="badge-dot" style="background: var(--color-safe); box-shadow: 0 0 6px var(--color-safe);"></span>
+        <span class="text-metadata">SITE EDGE ACTIVE</span>
+      </div>
+      <p class="status-site-name">Skyline Tower Alpha</p>
+      <div class="status-metric-row">
+        <span>FPS: 30.0</span>
+        <span>LATENCY: 42ms</span>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<style>
+  .app-sidebar {
+    width: 240px;
+    height: 100vh;
+    background: var(--color-surface);
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: var(--z-sidebar);
+    user-select: none;
+  }
+  .sidebar-brand {
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .brand-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .brand-box {
+    width: 32px;
+    height: 32px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-info-border);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .brand-info {
+    display: flex;
+    flex-direction: column;
+  }
+  .brand-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: var(--font-size-sm);
+    letter-spacing: 0.08em;
+    color: #FFFFFF;
+  }
+  .brand-meta {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2xs);
+    color: var(--color-text-muted);
+    letter-spacing: 0.05em;
+  }
+  .sidebar-section-title {
+    padding: var(--space-4) var(--space-4) var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2xs);
+    color: var(--color-text-muted);
+    letter-spacing: 0.08em;
+  }
+  .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 var(--space-2);
+  }
+  .nav-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .nav-anchor {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 0.5rem 0.75rem;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    transition: all var(--duration-fast);
+    position: relative;
+  }
+  .nav-anchor:hover {
+    background: var(--color-surface-hover);
+    color: var(--color-text-primary);
+  }
+  .nav-anchor.active {
+    background: var(--color-surface-active);
+    color: #FFFFFF;
+    font-weight: 600;
+    border: 1px solid var(--color-info-border);
+  }
+  .nav-anchor.active .icon-wrap {
+    color: var(--color-info-light);
+  }
+  .nav-label {
+    flex: 1;
+  }
+  .nav-badge {
+    padding: 1px 6px;
+    font-size: var(--font-size-2xs);
+    font-family: var(--font-mono);
+    border-radius: var(--radius-xs);
+    font-weight: 700;
+  }
+  .badge-safe {
+    background: var(--color-safe-bg);
+    color: var(--color-safe-light);
+    border: 1px solid var(--color-safe-border);
+  }
+  .badge-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning-light);
+    border: 1px solid var(--color-warning-border);
+  }
+  .badge-critical {
+    background: var(--color-critical-bg);
+    color: var(--color-critical-light);
+    border: 1px solid var(--color-critical-border);
+    animation: pulse-critical 2s infinite ease-in-out;
+  }
+  .badge-info {
+    background: var(--color-info-bg);
+    color: var(--color-info-light);
+    border: 1px solid var(--color-info-border);
+  }
+  .sidebar-footer {
+    padding: var(--space-4);
+    border-top: 1px solid var(--color-border);
+  }
+  .site-status-card {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3);
+  }
+  .status-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .status-site-name {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .status-metric-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-2xs);
+    color: var(--color-text-muted);
+  }
+
+  @media (max-width: 1024px) {
+    .app-sidebar {
+      display: none;
+    }
+  }
+</style>

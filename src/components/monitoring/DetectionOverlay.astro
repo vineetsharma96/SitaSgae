@@ -1,0 +1,215 @@
+---
+import type { Detection } from '../../lib/types';
+import Icon from '../ui/Icon.astro';
+
+interface Props {
+  detections: Detection[];
+  cameraName?: string;
+  showLabels?: boolean;
+}
+
+const { detections = [], cameraName = 'Active Feed', showLabels = true } = Astro.props;
+---
+
+<div class="detection-overlay-container" aria-label={`Computer vision detections for ${cameraName}`}>
+  <!-- Accessible screen reader & no-visual fallback list -->
+  <div class="sr-only">
+    <h4>Detected safety objects and violations:</h4>
+    <ul>
+      {detections.map((det) => (
+        <li>
+          {det.label} ({det.status.replace('_', ' ')}), Confidence: {Math.round(det.confidence * 100)}%, Tracking ID: {det.trackingId}, Severity: {det.severity}
+        </li>
+      ))}
+    </ul>
+  </div>
+
+  <!-- Visual SVG & HTML Bounding Box Overlays -->
+  <div class="overlay-viewport" aria-hidden="true">
+    {detections.map((det) => {
+      const left = `${det.box.x * 100}%`;
+      const top = `${det.box.y * 100}%`;
+      const width = `${det.box.width * 100}%`;
+      const height = `${det.box.height * 100}%`;
+      const isCritical = det.severity === 'critical';
+      const isSafe = det.severity === 'safe';
+      const isWarning = det.severity === 'warning';
+      const isHighConf = det.confidence >= 0.90;
+
+      return (
+        <div
+          class={`detection-box ${isCritical ? 'box-critical' : isSafe ? 'box-safe' : 'box-warning'} ${isHighConf ? 'conf-high' : 'conf-med'}`}
+          style={`left: ${left}; top: ${top}; width: ${width}; height: ${height};`}
+        >
+          <!-- Corner targeting brackets -->
+          <span class="corner top-left" />
+          <span class="corner top-right" />
+          <span class="corner bottom-left" />
+          <span class="corner bottom-right" />
+
+          {showLabels && (
+            <div class="detection-tag">
+              <span class="tag-title">
+                {isCritical && <span class="tag-alert-dot"></span>}
+                {det.label}
+              </span>
+              <span class="tag-meta">
+                {Math.round(det.confidence * 100)}% • {det.trackingId}
+              </span>
+            </div>
+          )}
+
+          <!-- Ground anchor indicator (Priority 10) -->
+          <div class="ground-anchor">
+            <span class="anchor-point"></span>
+            <span class="anchor-line"></span>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+</div>
+
+<style>
+  .detection-overlay-container {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .overlay-viewport {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .detection-box {
+    position: absolute;
+    border-width: 1.5px;
+    border-style: solid;
+    transition: all 0.2s ease-out;
+  }
+  .box-critical {
+    border-color: #EF4444;
+    background: rgba(239, 68, 68, 0.08);
+  }
+  .box-safe {
+    border-color: #10B981;
+    background: rgba(16, 185, 129, 0.05);
+  }
+  .box-warning {
+    border-color: #F59E0B;
+    background: rgba(245, 158, 11, 0.06);
+  }
+  .conf-high {
+    border-width: 2px;
+  }
+  .conf-med {
+    border-style: dashed;
+    border-width: 1.5px;
+  }
+  .corner {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-color: inherit;
+  }
+  .top-left {
+    top: -2px;
+    left: -2px;
+    border-top: 2px solid;
+    border-left: 2px solid;
+  }
+  .top-right {
+    top: -2px;
+    right: -2px;
+    border-top: 2px solid;
+    border-right: 2px solid;
+  }
+  .bottom-left {
+    bottom: -2px;
+    left: -2px;
+    border-bottom: 2px solid;
+    border-left: 2px solid;
+  }
+  .bottom-right {
+    bottom: -2px;
+    right: -2px;
+    border-bottom: 2px solid;
+    border-right: 2px solid;
+  }
+  .detection-tag {
+    position: absolute;
+    top: -26px;
+    left: 0;
+    background: rgba(11, 18, 32, 0.95);
+    border: 1px solid inherit;
+    border-radius: var(--radius-xs);
+    padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  }
+  .box-critical .detection-tag {
+    border-color: var(--color-critical);
+  }
+  .box-safe .detection-tag {
+    border-color: var(--color-safe);
+  }
+  .box-warning .detection-tag {
+    border-color: var(--color-warning);
+  }
+  .tag-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .tag-alert-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #EF4444;
+    animation: pulse-critical 1.5s infinite;
+  }
+  .tag-meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-secondary);
+  }
+  .ground-anchor {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .anchor-point {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #60A5FA;
+    box-shadow: 0 0 6px #3B82F6;
+  }
+  .anchor-line {
+    width: 1px;
+    height: 8px;
+    background: rgba(96, 165, 250, 0.4);
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

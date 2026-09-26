@@ -1,0 +1,218 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import Card from '../components/ui/Card.astro';
+import Badge from '../components/ui/Badge.astro';
+import Button from '../components/ui/Button.astro';
+import Icon from '../components/ui/Icon.astro';
+---
+
+<AppLayout title="System States & Resilience Matrix" currentPath="/system-states">
+  <div class="states-header">
+    <div class="header-titles">
+      <div class="site-tag">
+        <span class="badge-dot" style="background: var(--color-info);"></span>
+        <span class="text-metadata">PRIORITY 5 SYSTEM RESILIENCE & FAILURE STATES</span>
+      </div>
+      <h1 class="text-page-title">Operational System States Matrix</h1>
+    </div>
+    <p class="text-caption">
+      Interactive test harness verifying that every error, network drop, rendering failure, and skeleton state answers: <em>«What happened? Why? What can I do?»</em>
+    </p>
+  </div>
+
+  <div class="states-grid">
+    <!-- State 1: Skeleton Loading State -->
+    <Card title="1. Skeleton Loading State" subtitle="DATA IN-FLIGHT • ZERO LAYOUT SHIFT">
+      <div class="skeleton-container">
+        <div class="skeleton-line pulse-skeleton" style="width: 60%; height: 24px;"></div>
+        <div class="skeleton-line pulse-skeleton" style="width: 90%; height: 14px; margin-top: 8px;"></div>
+        <div class="skeleton-box pulse-skeleton" style="height: 120px; margin-top: 12px;"></div>
+      </div>
+      <div class="state-qa">
+        <p><strong>What:</strong> Initial telemetry synchronizing.</p>
+        <p><strong>Action:</strong> UI locks layout to avoid cumulative shift.</p>
+      </div>
+    </Card>
+
+    <!-- State 2: Camera Offline & RTSP Socket Failure -->
+    <Card title="2. Camera Offline / RTSP Failure" subtitle="RTSP SOCKET DROP • EDGE AUTO-RECONNECT" badge="OFFLINE" badgeVariant="muted">
+      <div class="state-preview-box">
+        <Icon name="camera" size={36} color="#64748B" />
+        <p class="state-title text-critical">RTSP STREAM SIGNAL LOST</p>
+        <p class="text-caption">Camera CAM-009 socket timed out. Last heartbeat 14m ago.</p>
+        <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 8px;" onclick="alert('Re-probing RTSP port 554 on gateway...');">
+          <Icon name="refresh" size={12} />
+          Retry RTSP Handshake
+        </button>
+      </div>
+      <div class="state-qa">
+        <p><strong>Why:</strong> Network switch reboot or severed PoE cabling.</p>
+        <p><strong>Action:</strong> Dispatches technician ping and switches to last cached frame.</p>
+      </div>
+    </Card>
+
+    <!-- State 3: Edge AI Vision Service Unavailable -->
+    <Card title="3. Edge AI Service Unavailable" subtitle="YOLO INFERENCE OFFLINE • PASSIVE VIDEO CONTINUES" badge="DEGRADED" badgeVariant="warning">
+      <div class="state-preview-box">
+        <Icon name="alert-triangle" size={36} color="#F59E0B" />
+        <p class="state-title text-warning">INFERENCE ENGINE RESTARTING</p>
+        <p class="text-caption">GPU worker cluster restarted for telemetry memory compaction. Model reloading.</p>
+        <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 8px;" onclick="alert('Manual failover to Secondary Edge Node...');">
+          Failover to Secondary Node
+        </button>
+      </div>
+      <div class="state-qa">
+        <p><strong>Safety:</strong> Raw video stays live; passive manual monitoring remains operational.</p>
+      </div>
+    </Card>
+
+    <!-- State 4: Network Disconnected / Offline Mode -->
+    <Card title="4. Network Disconnected" subtitle="AUTONOMOUS LOCAL EDGE OPERATION" badge="AIR-GAPPED" badgeVariant="info">
+      <div class="state-preview-box">
+        <Icon name="activity" size={36} color="#60A5FA" />
+        <p class="state-title">LOCAL AIR-GAPPED SURVIVAL MODE</p>
+        <p class="text-caption">Internet gateway unreachable. Local site siren and horn triggers remain 100% active.</p>
+        <Badge variant="safe" text="LOCAL ALARMS ACTIVE" style="margin-top: 8px;" />
+      </div>
+      <div class="state-qa">
+        <p><strong>Why:</strong> Jobsite fiber cut by backhoe.</p>
+        <p><strong>Action:</strong> Telemetry queues locally in SQLite buffer for later sync.</p>
+      </div>
+    </Card>
+
+    <!-- State 5: 3D / WebGL Rendering Unavailable Fallback -->
+    <Card title="5. 3D / WebGL Unavailable Fallback" subtitle="LOW-POWER OR UNSUPPORTED GPU" badge="FALLBACK ACTIVE" badgeVariant="safe">
+      <div class="state-preview-box">
+        <img src="/assets/site_hero_render.png" alt="Static render fallback" class="state-img-fallback" />
+        <p class="text-caption" style="margin-top: 6px;">Clean static render displayed instantly without WebGL context loss or crashes.</p>
+      </div>
+      <div class="state-qa">
+        <p><strong>Why:</strong> Browser WebGL disabled or rugged field tablet in battery-saver mode.</p>
+        <p><strong>Action:</strong> 100% accessibility preserved via static imagery & 2D diagrams.</p>
+      </div>
+    </Card>
+
+    <!-- State 6: Empty States (Zero Incidents / Zero Alerts) -->
+    <Card title="6. Zero Hazards Empty State" subtitle="PERFECT SAFETY COMPLIANCE SHIFT" badge="100% SAFE" badgeVariant="safe">
+      <div class="state-preview-box">
+        <Icon name="shield-check" size={36} color="#10B981" />
+        <p class="state-title text-safe">ZERO CRITICAL HAZARDS</p>
+        <p class="text-caption">All workers currently PPE compliant across 18 monitored camera zones.</p>
+        <Button href="/live-monitoring" variant="secondary" size="sm" style="margin-top: 8px;">
+          Inspect Live Wall
+        </Button>
+      </div>
+      <div class="state-qa">
+        <p><strong>Feedback:</strong> Clear positive reassurance rather than a blank or broken screen.</p>
+      </div>
+    </Card>
+
+    <!-- State 7: Geometry Polygon Self-Intersection Error -->
+    <Card title="7. Geometry Validation Failure" subtitle="POLYGON SELF-INTERSECTION GUARD" badge="INVALID GEOM" badgeVariant="critical">
+      <div class="state-preview-box">
+        <Icon name="alert-triangle" size={36} color="#EF4444" />
+        <p class="state-title text-critical">NON-SIMPLE POLYGON REJECTED</p>
+        <p class="text-caption">Edge between vertex 2 and 3 intersects edge between 4 and 1. Zone cannot be geofenced.</p>
+        <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 8px;" onclick="alert('Untangling vertices...');">
+          Auto-Untangle Vertices
+        </button>
+      </div>
+      <div class="state-qa">
+        <p><strong>Why:</strong> Prevents non-deterministic point-in-polygon containment errors.</p>
+      </div>
+    </Card>
+
+    <!-- State 8: Astro Island Hydration Failure Fallback -->
+    <Card title="8. Astro Hydration Fallback" subtitle="SERVER HTML PRESERVED • NO JAVASCRIPT" badge="RESILIENT HTML" badgeVariant="info">
+      <div class="state-preview-box">
+        <Icon name="layers" size={36} color="#3B82F6" />
+        <p class="state-title">STANDARD HTML FORM CONTROLS</p>
+        <p class="text-caption">If client island bundle fails to parse, standard server-rendered forms and links handle actions.</p>
+        <a href="/dashboard" class="btn btn-secondary btn-sm" style="margin-top: 8px;">
+          Standard GET Route
+        </a>
+      </div>
+      <div class="state-qa">
+        <p><strong>Requirement:</strong> Core alert acknowledgment never depends on bloated JS runtime.</p>
+      </div>
+    </Card>
+  </div>
+</AppLayout>
+
+<style>
+  .states-header {
+    margin-bottom: var(--space-6);
+  }
+  .header-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .site-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .states-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: var(--space-6);
+  }
+
+  .state-preview-box {
+    background: #090E17;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-height: 180px;
+    justify-content: center;
+  }
+  .state-title {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    margin-top: 8px;
+    letter-spacing: 0.05em;
+  }
+  .state-qa {
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-border);
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .state-img-fallback {
+    width: 100%;
+    height: 110px;
+    object-fit: cover;
+    border-radius: var(--radius-xs);
+  }
+
+  .skeleton-container {
+    background: #090E17;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-4);
+  }
+  .pulse-skeleton {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-xs);
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes skeleton-pulse {
+    0%, 100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+</style>

@@ -1,0 +1,427 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import Card from '../components/ui/Card.astro';
+import Badge from '../components/ui/Badge.astro';
+import Button from '../components/ui/Button.astro';
+import Icon from '../components/ui/Icon.astro';
+import { mockMetrics } from '../lib/mockData';
+
+const subcontractors = [
+  { name: 'Apex Crane & Rigging', workers: 24, compliance: 89.4, criticalCount: 2, rating: 'warning' },
+  { name: 'Vanguard Steel Framing', workers: 46, compliance: 97.8, criticalCount: 0, rating: 'safe' },
+  { name: 'Titan Shoring & Foundation', workers: 32, compliance: 92.1, criticalCount: 1, rating: 'warning' },
+  { name: 'Pioneer MEP & Electrical', workers: 44, compliance: 98.6, criticalCount: 0, rating: 'safe' }
+];
+
+const hourlyViolations = [
+  { hour: '07:00', count: 1 },
+  { hour: '08:00', count: 4 },
+  { hour: '09:00', count: 2 },
+  { hour: '10:00', count: 6 },
+  { hour: '11:00', count: 5 },
+  { hour: '12:00', count: 1 },
+  { hour: '13:00', count: 3 },
+  { hour: '14:00', count: 8 }, // Peak crane shift
+  { hour: '15:00', count: 4 },
+  { hour: '16:00', count: 2 },
+  { hour: '17:00', count: 1 },
+  { hour: '18:00', count: 0 }
+];
+---
+
+<AppLayout title="Safety Compliance & Decision Reports" currentPath="/reports">
+  <div class="reports-header">
+    <div class="header-titles">
+      <div class="site-tag">
+        <span class="badge-dot" style="background: var(--color-safe);"></span>
+        <span class="text-metadata">EXECUTIVE & SAFETY MARSHAL REPORTING</span>
+      </div>
+      <h1 class="text-page-title">Safety Intelligence & Compliance Reports</h1>
+    </div>
+
+    <div class="header-actions">
+      <select class="select-range" aria-label="Select report timeframe">
+        <option value="today">Today (Shift 1 & 2)</option>
+        <option value="7days">Past 7 Days</option>
+        <option value="month">Current Month (September 2026)</option>
+        <option value="quarter">Q3 2026</option>
+      </select>
+      <Button variant="primary" size="sm" onclick="alert('Exporting complete audit report PDF...');">
+        <Icon name="download" size={14} />
+        Export Audit PDF
+      </Button>
+    </div>
+  </div>
+
+  <!-- KPI Metric Summary Cards (Priority 3.8) -->
+  <div class="metrics-row">
+    <div class="metric-card panel">
+      <span class="text-metadata">OVERALL SITE COMPLIANCE</span>
+      <div class="metric-val text-safe">{mockMetrics.safetyCompliancePercent}%</div>
+      <span class="text-caption">+1.4% improvement vs previous shift</span>
+    </div>
+
+    <div class="metric-card panel">
+      <span class="text-metadata">AVG DISPATCH RESPONSE</span>
+      <div class="metric-val">{mockMetrics.avgResponseTimeSeconds}s</div>
+      <span class="text-caption">Target: under 60 seconds (PASSED)</span>
+    </div>
+
+    <div class="metric-card panel">
+      <span class="text-metadata">CRITICAL HAZARDS HALTED</span>
+      <div class="metric-val text-critical">14</div>
+      <span class="text-caption">Zero lost-time injuries this month</span>
+    </div>
+
+    <div class="metric-card panel">
+      <span class="text-metadata">CAMERA UPTIME</span>
+      <div class="metric-val text-info">{mockMetrics.cameraUptimePercent}%</div>
+      <span class="text-caption">18 of 20 edge RTSP streams healthy</span>
+    </div>
+  </div>
+
+  <!-- Main Chart Grid -->
+  <div class="reports-grid">
+    <!-- Trend Curve: 24h Hourly Hazard Distribution -->
+    <Card title="Hourly Hazard Detection Distribution" subtitle="PEAK RISK OCCURS DURING ACTIVE HOIST CYCLES (14:00)" class="trend-card">
+      <div class="chart-viewport" aria-label="Hazard frequency by hour">
+        <svg viewBox="0 0 700 240" class="trend-svg" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(59, 130, 246, 0.4)" />
+              <stop offset="100%" stop-color="rgba(59, 130, 246, 0)" />
+            </linearGradient>
+          </defs>
+
+          <!-- Horizontal guideline grid -->
+          <line x1="0" y1="40" x2="700" y2="40" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="0" y1="100" x2="700" y2="100" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="0" y1="160" x2="700" y2="160" stroke="rgba(255,255,255,0.06)" stroke-dasharray="4 4" />
+          <line x1="0" y1="210" x2="700" y2="210" stroke="#334155" />
+
+          <!-- Filled area -->
+          <path
+            d="M 30,190 L 80,140 L 140,175 L 200,90 L 260,110 L 320,190 L 380,160 L 440,50 L 500,120 L 560,170 L 620,195 L 670,210 L 670,210 L 30,210 Z"
+            fill="url(#chartGrad)"
+          />
+
+          <!-- Stroke line -->
+          <path
+            d="M 30,190 L 80,140 L 140,175 L 200,90 L 260,110 L 320,190 L 380,160 L 440,50 L 500,120 L 560,170 L 620,195 L 670,210"
+            fill="none"
+            stroke="#3B82F6"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+
+          <!-- Peak Marker at 14:00 -->
+          <circle cx="440" cy="50" r="5" fill="#EF4444" stroke="#FFFFFF" stroke-width="2" />
+          <text x="440" y="35" fill="#EF4444" font-family="JetBrains Mono" font-size="10" text-anchor="middle" font-weight="bold">
+            PEAK (8 BREACHES)
+          </text>
+        </svg>
+
+        <div class="chart-x-labels">
+          {hourlyViolations.map(h => (
+            <span>{h.hour}</span>
+          ))}
+        </div>
+      </div>
+
+      <!-- Accessible Table Alternative (Priority 3.8 & 6) -->
+      <details class="accessible-data-details">
+        <summary class="text-metadata">View Data as Accessible Table</summary>
+        <table class="report-data-table" aria-label="Hourly violation counts">
+          <thead><tr><th>Hour</th><th>Violations</th></tr></thead>
+          <tbody>
+            {hourlyViolations.map(h => (
+              <tr><td>{h.hour}</td><td>{h.count}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+    </Card>
+
+    <!-- PPE Violation Category Breakdown -->
+    <Card title="PPE Violation Breakdown" subtitle="CLASSIFIED BY COMPUTER VISION NODES" class="breakdown-card">
+      <div class="breakdown-bars">
+        <div class="bar-item">
+          <div class="bar-header">
+            <span>Hard Hat Missing</span>
+            <span class="bar-pct text-critical">42% (18 incidents)</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill bg-critical" style="width: 42%;"></div>
+          </div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-header">
+            <span>High-Vis Vest Missing</span>
+            <span class="bar-pct text-warning">28% (12 incidents)</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill bg-warning" style="width: 28%;"></div>
+          </div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-header">
+            <span>Unhooked Lanyard / Harness</span>
+            <span class="bar-pct text-warning">18% (8 incidents)</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill bg-warning" style="width: 18%;"></div>
+          </div>
+        </div>
+
+        <div class="bar-item">
+          <div class="bar-header">
+            <span>Eye / Face Shield Missing</span>
+            <span class="bar-pct text-info">12% (5 incidents)</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill bg-info" style="width: 12%;"></div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  </div>
+
+  <!-- Subcontractor Performance Leaderboard (Decision-Making) -->
+  <Card title="Subcontractor Safety Scorecard" subtitle="DATA-DRIVEN RATING FOR PROCUREMENT & MARSHAL INSPECTIONS" style="margin-top: var(--space-6);">
+    <div class="table-wrap">
+      <table class="leaderboard-table" aria-label="Subcontractor Safety Metrics">
+        <thead>
+          <tr>
+            <th>Subcontractor Entity</th>
+            <th>Active Headcount</th>
+            <th>Compliance Rate</th>
+            <th>Critical Hazards</th>
+            <th>Safety Standing</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {subcontractors.map((sub) => (
+            <tr>
+              <td style="font-weight: 600; color: #FFFFFF;">{sub.name}</td>
+              <td>{sub.workers} workers</td>
+              <td style="font-family: var(--font-mono); font-weight: 700;">
+                <span class={sub.compliance < 90 ? 'text-critical' : sub.compliance < 95 ? 'text-warning' : 'text-safe'}>
+                  {sub.compliance}%
+                </span>
+              </td>
+              <td>
+                {sub.criticalCount > 0 ? (
+                  <Badge variant="critical" text={`${sub.criticalCount} EVENTS`} />
+                ) : (
+                  <Badge variant="safe" text="CLEAN" />
+                )}
+              </td>
+              <td>
+                <span class={`status-badge status-${sub.rating}`}>
+                  {sub.rating === 'safe' ? 'Compliant Tier 1' : 'Inspection Required'}
+                </span>
+              </td>
+              <td>
+                <Button variant="secondary" size="sm" onclick={`alert('Opening audit details for ${sub.name}');`}>
+                  Detailed Audit
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </Card>
+</AppLayout>
+
+<style>
+  .reports-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  .header-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .site-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .select-range {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    color: #FFFFFF;
+    font-size: var(--font-size-xs);
+    outline: none;
+  }
+
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .metric-card {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .metric-val {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 800;
+    color: #FFFFFF;
+    line-height: 1.1;
+  }
+
+  .reports-grid {
+    display: grid;
+    grid-template-columns: 1.7fr 1fr;
+    gap: var(--space-6);
+  }
+  .chart-viewport {
+    position: relative;
+    width: 100%;
+    margin-top: var(--space-4);
+  }
+  .trend-svg {
+    width: 100%;
+    height: 200px;
+  }
+  .chart-x-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-muted);
+    margin-top: 6px;
+  }
+  .accessible-data-details {
+    margin-top: var(--space-4);
+    padding: var(--space-2);
+    border-top: 1px solid var(--color-border);
+  }
+  .accessible-data-details summary {
+    cursor: pointer;
+  }
+  .report-data-table {
+    width: 100%;
+    margin-top: 8px;
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+  }
+  .report-data-table td, .report-data-table th {
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .breakdown-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+  .bar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .bar-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-xs);
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .bar-pct {
+    font-family: var(--font-mono);
+    font-weight: 700;
+  }
+  .bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--color-surface-elevated);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: var(--radius-pill);
+  }
+  .bg-critical {
+    background: var(--color-critical);
+  }
+  .bg-warning {
+    background: var(--color-warning);
+  }
+  .bg-info {
+    background: var(--color-info);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+  .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+  }
+  .leaderboard-table th, .leaderboard-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .leaderboard-table th {
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .status-badge {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .status-safe {
+    background: var(--color-safe-bg);
+    color: var(--color-safe-light);
+  }
+  .status-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning-light);
+  }
+
+  @media (max-width: 1024px) {
+    .metrics-row {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .reports-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .metrics-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

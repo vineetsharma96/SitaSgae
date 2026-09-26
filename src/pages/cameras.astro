@@ -1,0 +1,374 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import Card from '../components/ui/Card.astro';
+import Badge from '../components/ui/Badge.astro';
+import Button from '../components/ui/Button.astro';
+import Icon from '../components/ui/Icon.astro';
+import { mockCameras } from '../lib/mockData';
+---
+
+<AppLayout title="Camera Infrastructure & RTSP Streams" currentPath="/cameras">
+  <div class="camera-mgmt-header">
+    <div class="header-titles">
+      <div class="site-tag">
+        <span class="badge-dot" style="background: var(--color-safe);"></span>
+        <span class="text-metadata">SURVEILLANCE TOPOLOGY & EDGE NODES</span>
+      </div>
+      <h1 class="text-page-title">Camera Infrastructure Management</h1>
+    </div>
+
+    <!-- Setup Camera Trigger (Priority 9) -->
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary btn-sm" id="btn-open-add-camera">
+        <Icon name="plus" size={14} />
+        Add New Camera Stream
+      </button>
+    </div>
+  </div>
+
+  <!-- Camera Table Card -->
+  <Card title="Configured RTSP Streams & Edge Gateways" subtitle="18 ONLINE • 2 OFFLINE • PROTOCOL RTSP/HLS OVER TLS">
+    <div class="table-wrap">
+      <table class="camera-table" aria-label="Camera Streams List">
+        <thead>
+          <tr>
+            <th>Camera ID & Label</th>
+            <th>Location & Level</th>
+            <th>Status & Heartbeat</th>
+            <th>Stream Type</th>
+            <th>Resolution & FPS</th>
+            <th>Edge Latency</th>
+            <th>Active Vision Rules</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {mockCameras.map((cam) => {
+            const isOffline = cam.status === 'offline';
+            return (
+              <tr>
+                <td>
+                  <div class="cam-cell">
+                    <span class="cam-id-badge">{cam.id}</span>
+                    <span class="cam-name-text">{cam.name}</span>
+                  </div>
+                </td>
+                <td>{cam.level} • {cam.zone}</td>
+                <td>
+                  <div class="status-cell">
+                    <Badge variant={isOffline ? 'muted' : 'safe'} text={cam.status.toUpperCase()} />
+                    <span class="text-caption">{cam.heartbeat}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="stream-pill">{cam.streamType}</span>
+                </td>
+                <td>
+                  <span class="hud-text">{isOffline ? 'N/A' : `${cam.resolution} @ ${cam.fps}fps`}</span>
+                </td>
+                <td>
+                  <span class="hud-text">{isOffline ? 'Timeout' : `${cam.latencyMs}ms`}</span>
+                </td>
+                <td>
+                  <span class="rules-summary">{cam.activeRules.join(', ')}</span>
+                </td>
+                <td>
+                  <div style="display: flex; gap: 4px;">
+                    <Button href={`/live-monitoring`} variant="secondary" size="sm">
+                      Feed
+                    </Button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick={`alert('Ping diagnostic dispatched to ${cam.id}');`}>
+                      <Icon name="refresh" size={12} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </Card>
+
+  <!-- Add Camera Setup Flow Modal (Priority 9) -->
+  <div class="modal-backdrop" id="add-camera-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card panel technical-corner">
+      <div class="modal-header">
+        <div>
+          <h3 class="text-card-title" id="modal-title">Provision New Camera Stream</h3>
+          <p class="text-caption">Step-by-step RTSP onboarding into SiteSage Edge Vision Node</p>
+        </div>
+        <button type="button" class="close-btn" id="btn-close-modal" aria-label="Close modal">&times;</button>
+      </div>
+
+      <form class="modal-form" id="camera-provision-form">
+        <!-- Setup flow: Name → RTSP URL → Location → Floor → Site → Test Connection → Save -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cam-name" class="form-label">CAMERA FRIENDLY NAME</label>
+            <input type="text" id="cam-name" class="form-input" placeholder="e.g. South Perimeter Fence - Gate 3" required />
+          </div>
+          <div class="form-group">
+            <label for="cam-id" class="form-label">LOGICAL CAMERA ID</label>
+            <input type="text" id="cam-id" class="form-input" value="CAM-025" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="rtsp-url" class="form-label">RTSP STREAM URI</label>
+          <input type="text" id="rtsp-url" class="form-input" placeholder="rtsp://edge-04.site-alpha.internal:554/live/stream1" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cam-site" class="form-label">PROJECT SITE</label>
+            <select id="cam-site" class="form-input">
+              <option value="alpha">Skyline Tower Alpha</option>
+              <option value="beta">Metro Transit Hub West</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="cam-floor" class="form-label">FLOOR / LEVEL</label>
+            <input type="text" id="cam-floor" class="form-input" placeholder="e.g. Level 14 Slab" required />
+          </div>
+        </div>
+
+        <!-- Connection Test Feedback State -->
+        <div class="test-feedback-box" id="connection-test-result" style="display: none;">
+          <div class="test-icon-box">
+            <Icon name="check-circle" size={18} color="#10B981" />
+          </div>
+          <div class="test-text">
+            <span class="test-title">Connection Verified (RTSP Handshake OK)</span>
+            <span class="test-sub">H.265 stream identified @ 3840x2160, 30.2 FPS, Latency: 44ms</span>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary btn-md" id="btn-test-connection">
+            <Icon name="activity" size={14} />
+            Test Connection
+          </button>
+          <Button type="submit" variant="primary" size="md" id="btn-save-cam">
+            Save & Deploy to Edge
+          </Button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const modal = document.getElementById('add-camera-modal');
+    const openBtn = document.getElementById('btn-open-add-camera');
+    const closeBtn = document.getElementById('btn-close-modal');
+    const testBtn = document.getElementById('btn-test-connection');
+    const testResult = document.getElementById('connection-test-result');
+    const form = document.getElementById('camera-provision-form');
+
+    openBtn?.addEventListener('click', () => {
+      if (modal) modal.style.display = 'flex';
+    });
+
+    closeBtn?.addEventListener('click', () => {
+      if (modal) modal.style.display = 'none';
+    });
+
+    testBtn?.addEventListener('click', () => {
+      testBtn.innerHTML = `<span>Probing Socket...</span>`;
+      setTimeout(() => {
+        testBtn.innerHTML = `<span>Test Connection</span>`;
+        if (testResult) testResult.style.display = 'flex';
+        (window as any).showToast?.('RTSP stream probe succeeded with sub-50ms latency.', 'safe');
+      }, 700);
+    });
+
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      (window as any).showToast?.('Camera CAM-025 provisioned and added to active edge monitoring matrix.', 'safe');
+      if (modal) modal.style.display = 'none';
+    });
+  </script>
+</AppLayout>
+
+<style>
+  .camera-mgmt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  .header-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .site-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+  .camera-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-xs);
+  }
+  .camera-table th, .camera-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .camera-table th {
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .cam-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cam-id-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-info-light);
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
+  }
+  .cam-name-text {
+    font-weight: 600;
+    color: #FFFFFF;
+  }
+  .status-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .stream-pill {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--color-info-light);
+    border: 1px solid var(--color-info-border);
+    padding: 2px 6px;
+    border-radius: var(--radius-xs);
+  }
+  .hud-text {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+  .rules-summary {
+    color: var(--color-text-muted);
+    font-size: 11px;
+  }
+
+  /* Modal */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: var(--z-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+  }
+  .modal-card {
+    width: 100%;
+    max-width: 580px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-header {
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .close-btn {
+    font-size: 24px;
+    line-height: 1;
+    color: var(--color-text-muted);
+    cursor: pointer;
+  }
+  .close-btn:hover {
+    color: #FFFFFF;
+  }
+  .modal-form {
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .form-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-weight: 600;
+  }
+  .form-input {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    color: #FFFFFF;
+    font-size: var(--font-size-xs);
+    outline: none;
+  }
+  .form-input:focus {
+    border-color: var(--color-info);
+  }
+  .test-feedback-box {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--color-safe-bg);
+    border: 1px solid var(--color-safe-border);
+    border-radius: var(--radius-sm);
+  }
+  .test-text {
+    display: flex;
+    flex-direction: column;
+  }
+  .test-title {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-safe-light);
+  }
+  .test-sub {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #A7F3D0;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+  }
+</style>

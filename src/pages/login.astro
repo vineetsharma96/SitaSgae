@@ -1,0 +1,226 @@
+---
+import MarketingLayout from '../layouts/MarketingLayout.astro';
+import Icon from '../components/ui/Icon.astro';
+import Button from '../components/ui/Button.astro';
+---
+
+<MarketingLayout title="Sign In — SiteSage Command Center">
+  <div class="login-wrapper">
+    <div class="login-panel panel technical-corner">
+      <div class="login-header">
+        <div class="brand-box">
+          <Icon name="shield-alert" size={24} color="#3B82F6" />
+        </div>
+        <h1 class="text-section-heading" style="margin-top: 12px;">COMMAND CENTER ACCESS</h1>
+        <p class="text-caption">Enter verified field credentials or use the demonstration profile.</p>
+      </div>
+
+      <!-- Demo Shortcut Banner -->
+      <div class="demo-login-box">
+        <div class="demo-info">
+          <span class="badge badge-info">DEMO PROFILE</span>
+          <span class="demo-role">Sector 4 Lead Marshal: Marcus Vance</span>
+        </div>
+        <a href="/dashboard" class="btn btn-primary btn-sm" id="btn-quick-demo">
+          Instant Launch
+          <Icon name="arrow-right" size={14} />
+        </a>
+      </div>
+
+      <div class="divider-text">
+        <span>OR VERIFIED SIGN IN</span>
+      </div>
+
+      <!-- Standard Form with Accessible Feedback -->
+      <form class="login-form" id="login-form" action="/dashboard" method="GET">
+        <div class="form-group">
+          <label for="project-site" class="form-label">ASSIGNED PROJECT SITE</label>
+          <select id="project-site" class="form-input" required>
+            <option value="alpha">Skyline Tower Alpha (Sector 4 Core)</option>
+            <option value="beta">Metro Transit Hub West</option>
+            <option value="gamma">Harbor Logistics Center</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="user-email" class="form-label">FIELD OPERATOR ID / EMAIL</label>
+          <input
+            type="email"
+            id="user-email"
+            class="form-input"
+            value="m.vance@sitesage.internal"
+            placeholder="operator@sitesage.internal"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="user-password" class="form-label">ACCESS KEY / PIN</label>
+          <input
+            type="password"
+            id="user-password"
+            class="form-input"
+            value="••••••••••••"
+            placeholder="Enter security token"
+            required
+          />
+        </div>
+
+        <div id="login-error-msg" class="login-error" style="display: none;" role="alert">
+          <Icon name="alert-triangle" size={14} color="#EF4444" />
+          <span>Invalid edge credentials. Use demo bypass above.</span>
+        </div>
+
+        <Button type="submit" variant="primary" size="md" class="btn-block" id="btn-submit-login">
+          Verify Edge Credentials
+        </Button>
+      </form>
+
+      <div class="login-footer">
+        <div class="trust-pill">
+          <Icon name="shield-check" size={14} color="#10B981" />
+          <span>FIPS 140-2 Encrypted Session</span>
+        </div>
+        <a href="/system-states" class="text-caption text-link">View System Health & State Matrix</a>
+      </div>
+    </div>
+  </div>
+</MarketingLayout>
+
+<style>
+  .login-wrapper {
+    min-height: calc(100vh - 160px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8) var(--space-4);
+  }
+  .login-panel {
+    width: 100%;
+    max-width: 440px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-lg);
+  }
+  .login-header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: var(--space-6);
+  }
+  .brand-box {
+    width: 48px;
+    height: 48px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-info-border);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .demo-login-box {
+    background: rgba(37, 99, 235, 0.08);
+    border: 1px solid var(--color-info-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+  }
+  .demo-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .demo-role {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  .divider-text {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: var(--space-6) 0;
+  }
+  .divider-text::before,
+  .divider-text::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .divider-text span {
+    padding: 0 var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-muted);
+    letter-spacing: 0.08em;
+  }
+  .login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+  }
+  .form-input {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    color: #FFFFFF;
+    font-size: var(--font-size-sm);
+    font-family: inherit;
+    transition: border-color var(--duration-fast);
+  }
+  .form-input:focus {
+    border-color: var(--color-info);
+    outline: none;
+  }
+  .btn-block {
+    width: 100%;
+    margin-top: var(--space-2);
+  }
+  .login-error {
+    background: var(--color-critical-bg);
+    border: 1px solid var(--color-critical-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-xs);
+    color: var(--color-critical-light);
+  }
+  .login-footer {
+    margin-top: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .trust-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-2xs);
+    color: var(--color-text-muted);
+  }
+  .text-link {
+    color: var(--color-info-light);
+    text-decoration: underline;
+  }
+</style>

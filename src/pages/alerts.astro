@@ -1,0 +1,401 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import Card from '../components/ui/Card.astro';
+import Badge from '../components/ui/Badge.astro';
+import Button from '../components/ui/Button.astro';
+import Icon from '../components/ui/Icon.astro';
+import DetectionOverlay from '../components/monitoring/DetectionOverlay.astro';
+import { mockIncidents } from '../lib/mockData';
+
+const criticalAlert = mockIncidents[0]; // INC-2026-0881
+---
+
+<AppLayout title="Critical Safety Alert Center" currentPath="/alerts">
+  <div class="alert-page-header">
+    <div class="title-wrap">
+      <div class="alert-pulse-tag">
+        <span class="badge-dot" style="background: var(--color-critical); animation: pulse-critical 1.5s infinite;"></span>
+        <span class="text-metadata">ACTIVE HIGH-PRIORITY INTERRUPTS</span>
+      </div>
+      <h1 class="text-page-title" style="color: #F87171;">Critical Safety Alerts ({mockIncidents.filter(i => i.severity === 'critical').length})</h1>
+    </div>
+
+    <!-- Audio Siren Toggle Simulator -->
+    <div class="siren-toggle-box">
+      <button type="button" class="siren-btn" id="siren-toggle-btn" aria-pressed="false">
+        <Icon name="bell" size={16} color="#F87171" />
+        <span id="siren-status-text">Audio Siren: Silent</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Primary Critical Alert Workspace Card (Priority 3.5) -->
+  <div class="alert-workspace-card panel" id="main-alert-card">
+    <div class="alert-top-strip">
+      <div class="strip-left">
+        <Badge variant="critical" text="HIGH HAZARD DETECTED" />
+        <span class="alert-id-text">{criticalAlert.id}</span>
+        <span class="strip-divider">|</span>
+        <span class="text-metadata">{criticalAlert.site}</span>
+      </div>
+      <div class="strip-right">
+        <span class="text-metadata">TIMESTAMP: {criticalAlert.timestamp}</span>
+      </div>
+    </div>
+
+    <div class="alert-body-grid">
+      <!-- Left: Evidence Snapshot + Realtime AI Box Overlays -->
+      <div class="alert-media-column">
+        <div class="alert-evidence-frame">
+          <img
+            src="/assets/evidence-helmet-crane.svg"
+            alt="Critical safety alert evidence preview with computer vision overlay"
+            class="alert-evidence-img"
+          />
+          <DetectionOverlay detections={criticalAlert.detections} cameraName={criticalAlert.cameraName} />
+
+          <div class="frame-watermark">
+            <span>{criticalAlert.cameraName}</span>
+            <span>{criticalAlert.location}</span>
+          </div>
+        </div>
+
+        <div class="evidence-toolbar">
+          <Button href={`/live-monitoring`} variant="secondary" size="sm">
+            <Icon name="video" size={14} />
+            View Live Camera Feed
+          </Button>
+          <span class="text-metadata" style="margin-left: auto;">INFERENCE CONFIDENCE: 96.4%</span>
+        </div>
+      </div>
+
+      <!-- Right: Operational Breakdown & Required Actions -->
+      <div class="alert-info-column">
+        <!-- 3 Fundamental Questions -->
+        <div class="operational-qa-box">
+          <div class="qa-item">
+            <span class="qa-label">1. WHAT IS HAPPENING?</span>
+            <p class="qa-value danger">{criticalAlert.title}</p>
+            <p class="text-caption">Worker Tracking #WK-4491 inside crane radius without required hard hat.</p>
+          </div>
+
+          <div class="qa-item">
+            <span class="qa-label">2. WHERE IS IT HAPPENING?</span>
+            <p class="qa-value">{criticalAlert.location} • {criticalAlert.site}</p>
+            <p class="text-caption">Zone A (Active Crane Radius) • Connected to {criticalAlert.cameraId}</p>
+          </div>
+
+          <div class="qa-item">
+            <span class="qa-label">3. WHAT SHOULD I DO NEXT?</span>
+            <div class="qa-recommendation-box">
+              <Icon name="alert-triangle" size={16} color="#EF4444" />
+              <p class="qa-rec-text">{criticalAlert.recommendedAction}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Control Buttons (Priority 3.5 & 3.6) -->
+        <div class="alert-actions-panel">
+          <div class="action-buttons-grid">
+            <button type="button" class="btn btn-danger btn-lg" id="btn-ack-alert">
+              <Icon name="check" size={18} />
+              Acknowledge Alert
+            </button>
+            <button type="button" class="btn btn-secondary btn-lg" id="btn-assign-marshal">
+              <Icon name="users" size={16} />
+              Assign to Marshal Vance
+            </button>
+            <button type="button" class="btn btn-secondary btn-lg" id="btn-escalate-ops">
+              <Icon name="shield-alert" size={16} />
+              Escalate to Superintendent
+            </button>
+            <button type="button" class="btn btn-primary btn-lg" id="btn-resolve-alert">
+              <Icon name="check-circle" size={16} />
+              Mark Resolved
+            </button>
+          </div>
+          <p class="text-caption" style="text-align: center; margin-top: 8px;">
+            Actions are logged directly into the immutable project safety audit trail.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Secondary Active Alerts Queue -->
+  <section class="secondary-alerts-section">
+    <h2 class="text-section-heading" style="margin-bottom: var(--space-4);">Secondary Warning Alerts</h2>
+    <div class="secondary-alerts-grid">
+      {mockIncidents.slice(1).map((inc) => (
+        <Card title={inc.title} subtitle={`${inc.location} • ${inc.timestamp}`} badge={inc.severity.toUpperCase()} badgeVariant={inc.severity}>
+          <p class="text-caption" style="margin-bottom: 12px;">{inc.aiExplanation}</p>
+          <div style="display: flex; gap: 8px; justify-content: flex-end;">
+            <Button href={`/incidents/${inc.id}`} variant="secondary" size="sm">
+              Investigate
+            </Button>
+            <Button variant="ghost" size="sm" onclick={`alert('Event ${inc.id} acknowledged.');`}>
+              Acknowledge
+            </Button>
+          </div>
+        </Card>
+      ))}
+    </div>
+  </section>
+
+  <script>
+    // Action handler buttons
+    const ackBtn = document.getElementById('btn-ack-alert');
+    const assignBtn = document.getElementById('btn-assign-marshal');
+    const escalateBtn = document.getElementById('btn-escalate-ops');
+    const resolveBtn = document.getElementById('btn-resolve-alert');
+    const alertCard = document.getElementById('main-alert-card');
+
+    ackBtn?.addEventListener('click', () => {
+      ackBtn.innerHTML = `<span>Acknowledged ✓</span>`;
+      (ackBtn as HTMLButtonElement).disabled = true;
+      (window as any).showToast?.('Alert acknowledged by active operator.', 'safe');
+    });
+
+    assignBtn?.addEventListener('click', () => {
+      assignBtn.innerHTML = `<span>Assigned to Vance ✓</span>`;
+      (assignBtn as HTMLButtonElement).disabled = true;
+      (window as any).showToast?.('Field ticket assigned to Lead Marshal Marcus Vance.', 'info');
+    });
+
+    escalateBtn?.addEventListener('click', () => {
+      (window as any).showToast?.('Incident escalated to Rigging Superintendent David Chen.', 'warning');
+    });
+
+    resolveBtn?.addEventListener('click', () => {
+      if (confirm('Confirm resolution: Worker cleared crane perimeter and hard hat verified?')) {
+        resolveBtn.innerHTML = `<span>Incident Resolved ✓</span>`;
+        (resolveBtn as HTMLButtonElement).disabled = true;
+        if (alertCard) {
+          alertCard.style.borderColor = 'var(--color-safe)';
+        }
+        (window as any).showToast?.('Incident INC-2026-0881 closed and logged.', 'safe');
+      }
+    });
+
+    // Siren toggle simulator
+    const sirenBtn = document.getElementById('siren-toggle-btn');
+    const sirenText = document.getElementById('siren-status-text');
+    let sirenActive = false;
+
+    sirenBtn?.addEventListener('click', () => {
+      sirenActive = !sirenActive;
+      sirenBtn.setAttribute('aria-pressed', sirenActive.toString());
+      if (sirenActive) {
+        sirenBtn.classList.add('siren-active');
+        if (sirenText) sirenText.textContent = 'Audio Siren: SOUNDING';
+        (window as any).showToast?.('Emergency acoustic site horn activated.', 'critical');
+      } else {
+        sirenBtn.classList.remove('siren-active');
+        if (sirenText) sirenText.textContent = 'Audio Siren: Silent';
+        (window as any).showToast?.('Acoustic horn muted.', 'info');
+      }
+    });
+  </script>
+</AppLayout>
+
+<style>
+  .alert-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+  }
+  .title-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .alert-pulse-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .siren-toggle-box {
+    display: flex;
+    align-items: center;
+  }
+  .siren-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-critical-border);
+    border-radius: var(--radius-md);
+    color: var(--color-critical-light);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all var(--duration-fast);
+  }
+  .siren-btn:hover {
+    background: var(--color-critical-bg);
+  }
+  .siren-btn.siren-active {
+    background: var(--color-critical);
+    color: #FFFFFF;
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
+  }
+
+  .alert-workspace-card {
+    background: var(--color-surface);
+    border: 2px solid var(--color-critical);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: 0 0 24px rgba(239, 68, 68, 0.2);
+    margin-bottom: var(--space-8);
+  }
+  .alert-top-strip {
+    background: var(--color-critical-dark);
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .strip-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .alert-id-text {
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: #FFFFFF;
+  }
+  .strip-divider {
+    color: rgba(255, 255, 255, 0.3);
+  }
+
+  .alert-body-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    min-height: 480px;
+  }
+  .alert-media-column {
+    background: #020617;
+    border-right: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
+  }
+  .alert-evidence-frame {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    overflow: hidden;
+  }
+  .alert-evidence-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .frame-watermark {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    display: flex;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: #94A3B8;
+    background: rgba(11, 18, 32, 0.85);
+    padding: 2px 8px;
+    border-radius: var(--radius-xs);
+  }
+  .evidence-toolbar {
+    padding: var(--space-3);
+    background: var(--color-surface-elevated);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+  }
+
+  .alert-info-column {
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--space-6);
+    background: var(--color-surface);
+  }
+  .operational-qa-box {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .qa-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .qa-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-text-muted);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .qa-value {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+  .qa-value.danger {
+    color: var(--color-critical-light);
+    font-size: var(--font-size-lg);
+  }
+  .qa-recommendation-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: var(--color-surface-elevated);
+    border-left: 3px solid var(--color-critical);
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    margin-top: 4px;
+  }
+  .qa-rec-text {
+    font-size: var(--font-size-sm);
+    color: #FFFFFF;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .action-buttons-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
+
+  .secondary-alerts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--space-4);
+  }
+
+  @media (max-width: 1024px) {
+    .alert-body-grid {
+      grid-template-columns: 1fr;
+    }
+    .alert-media-column {
+      border-right: none;
+      border-bottom: 1px solid var(--color-border);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .action-buttons-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
